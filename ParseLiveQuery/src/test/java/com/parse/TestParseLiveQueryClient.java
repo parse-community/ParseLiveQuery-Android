@@ -1,0 +1,339 @@
+package com.parse;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
+import org.robolectric.RobolectricGradleTestRunner;
+import org.robolectric.annotation.Config;
+
+import java.net.URI;
+import java.util.concurrent.Executor;
+
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertTrue;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+
+@RunWith(RobolectricGradleTestRunner.class)
+@Config(constants = BuildConfig.class, sdk = 21)
+public class TestParseLiveQueryClient {
+
+    private WebSocketClient webSocketClient;
+    private WebSocketClient.WebSocketClientCallback webSocketClientCallback;
+    private ParseLiveQueryClient<ParseObject> parseLiveQueryClient;
+
+    @Before
+    public void setUp() throws Exception {
+        ParsePlugins.initialize("1234", "1234");
+        parseLiveQueryClient = ParseLiveQueryClient.Factory.getClient(new URI(""), new WebSocketClientFactory() {
+            @Override
+            public WebSocketClient createInstance(WebSocketClient.WebSocketClientCallback webSocketClientCallback, URI hostUrl) {
+                TestParseLiveQueryClient.this.webSocketClientCallback = webSocketClientCallback;
+                webSocketClient = mock(WebSocketClient.class);
+                return webSocketClient;
+            }
+        }, new Executor() {
+            @Override
+            public void execute(Runnable command) {
+                command.run();
+            }
+        });
+        reconnect();
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        ParseCorePlugins.getInstance().reset();
+        ParsePlugins.reset();
+    }
+
+    @Test
+    public void testSubscribeWhenSubscribedToCallback() throws Exception {
+        SubscriptionHandling.HandleSubscribeCallback<ParseObject> subscribeMockCallback = mock(SubscriptionHandling.HandleSubscribeCallback.class);
+
+        ParseQuery<ParseObject> parseQuery = new ParseQuery<>("test");
+        createSubscription(parseQuery, subscribeMockCallback);
+
+        verify(subscribeMockCallback, times(1)).onSubscribe(parseQuery);
+    }
+
+    @Test
+    public void testUnsubscribeWhenSubscribedToCallback() throws Exception {
+        ParseQuery<ParseObject> parseQuery = new ParseQuery<>("test");
+        SubscriptionHandling<ParseObject> subscriptionHandling = createSubscription(parseQuery, mock(SubscriptionHandling.HandleSubscribeCallback.class));
+
+        parseLiveQueryClient.unsubscribe(parseQuery);
+        verify(webSocketClient, times(1)).send(any(String.class));
+
+        SubscriptionHandling.HandleUnsubscribeCallback<ParseObject> unsubscribeMockCallback = mock(SubscriptionHandling.HandleUnsubscribeCallback.class);
+        subscriptionHandling.handleUnsubscribe(unsubscribeMockCallback);
+        webSocketClientCallback.onMessage(createUnsubscribedMessage(subscriptionHandling.getRequestId()).toString());
+
+        verify(unsubscribeMockCallback, times(1)).onUnsubscribe(parseQuery);
+    }
+
+    @Test
+    public void testErrorWhenSubscribedToCallback() throws Exception {
+        ParseQuery<ParseObject> parseQuery = new ParseQuery<>("test");
+        SubscriptionHandling<ParseObject> subscriptionHandling = createSubscription(parseQuery, mock(SubscriptionHandling.HandleSubscribeCallback.class));
+
+        SubscriptionHandling.HandleErrorCallback<ParseObject> errorMockCallback = mock(SubscriptionHandling.HandleErrorCallback.class);
+        subscriptionHandling.handleError(errorMockCallback);
+        webSocketClientCallback.onMessage(createErrorMessage(subscriptionHandling.getRequestId()).toString());
+
+        ArgumentCaptor<LiveQueryException> errorCaptor = ArgumentCaptor.forClass(LiveQueryException.class);
+        verify(errorMockCallback, times(1)).onError(eq(parseQuery), errorCaptor.capture());
+
+        LiveQueryException genericError = errorCaptor.getValue();
+        assertTrue(genericError instanceof LiveQueryException.ServerReportedException);
+
+        LiveQueryException.ServerReportedException serverError = (LiveQueryException.ServerReportedException) genericError;
+        assertEquals(serverError.getError(), "testError");
+        assertEquals(serverError.getCode(), 1);
+        assertEquals(serverError.isReconnect(), true);
+    }
+
+    @Test
+    public void testCreateEventWhenSubscribedToCallback() throws Exception {
+        ParseQuery<ParseObject> parseQuery = new ParseQuery<>("test");
+        SubscriptionHandling<ParseObject> subscriptionHandling = createSubscription(parseQuery, mock(SubscriptionHandling.HandleSubscribeCallback.class));
+
+        SubscriptionHandling.HandleEventCallback<ParseObject> eventMockCallback = mock(SubscriptionHandling.HandleEventCallback.class);
+        subscriptionHandling.handleEvent(SubscriptionHandling.Event.CREATE, eventMockCallback);
+
+        ParseObject parseObject = new ParseObject("Test");
+        parseObject.setObjectId("testId");
+
+        webSocketClientCallback.onMessage(createObjectCreateMessage(subscriptionHandling.getRequestId(), parseObject).toString());
+
+        validateSameObject(eventMockCallback, parseQuery, parseObject);
+    }
+
+    @Test
+    public void testEnterEventWhenSubscribedToCallback() throws Exception {
+        ParseQuery<ParseObject> parseQuery = new ParseQuery<>("test");
+        SubscriptionHandling<ParseObject> subscriptionHandling = createSubscription(parseQuery, mock(SubscriptionHandling.HandleSubscribeCallback.class));
+
+        SubscriptionHandling.HandleEventCallback<ParseObject> eventMockCallback = mock(SubscriptionHandling.HandleEventCallback.class);
+        subscriptionHandling.handleEvent(SubscriptionHandling.Event.ENTER, eventMockCallback);
+
+        ParseObject parseObject = new ParseObject("Test");
+        parseObject.setObjectId("testId");
+
+        webSocketClientCallback.onMessage(createObjectEnterMessage(subscriptionHandling.getRequestId(), parseObject).toString());
+
+        validateSameObject(eventMockCallback, parseQuery, parseObject);
+    }
+
+    @Test
+    public void testUpdateEventWhenSubscribedToCallback() throws Exception {
+        ParseQuery<ParseObject> parseQuery = new ParseQuery<>("test");
+        SubscriptionHandling<ParseObject> subscriptionHandling = createSubscription(parseQuery, mock(SubscriptionHandling.HandleSubscribeCallback.class));
+
+        SubscriptionHandling.HandleEventCallback<ParseObject> eventMockCallback = mock(SubscriptionHandling.HandleEventCallback.class);
+        subscriptionHandling.handleEvent(SubscriptionHandling.Event.UPDATE, eventMockCallback);
+
+        ParseObject parseObject = new ParseObject("Test");
+        parseObject.setObjectId("testId");
+
+        webSocketClientCallback.onMessage(createObjectUpdateMessage(subscriptionHandling.getRequestId(), parseObject).toString());
+
+        validateSameObject(eventMockCallback, parseQuery, parseObject);
+    }
+
+    @Test
+    public void testLeaveEventWhenSubscribedToCallback() throws Exception {
+        ParseQuery<ParseObject> parseQuery = new ParseQuery<>("test");
+        SubscriptionHandling<ParseObject> subscriptionHandling = createSubscription(parseQuery, mock(SubscriptionHandling.HandleSubscribeCallback.class));
+
+        SubscriptionHandling.HandleEventCallback<ParseObject> eventMockCallback = mock(SubscriptionHandling.HandleEventCallback.class);
+        subscriptionHandling.handleEvent(SubscriptionHandling.Event.LEAVE, eventMockCallback);
+
+        ParseObject parseObject = new ParseObject("Test");
+        parseObject.setObjectId("testId");
+
+        webSocketClientCallback.onMessage(createObjectLeaveMessage(subscriptionHandling.getRequestId(), parseObject).toString());
+
+        validateSameObject(eventMockCallback, parseQuery, parseObject);
+    }
+
+
+    @Test
+    public void testDeleteEventWhenSubscribedToCallback() throws Exception {
+        ParseQuery<ParseObject> parseQuery = new ParseQuery<>("test");
+        SubscriptionHandling<ParseObject> subscriptionHandling = createSubscription(parseQuery, mock(SubscriptionHandling.HandleSubscribeCallback.class));
+
+        SubscriptionHandling.HandleEventCallback<ParseObject> eventMockCallback = mock(SubscriptionHandling.HandleEventCallback.class);
+        subscriptionHandling.handleEvent(SubscriptionHandling.Event.DELETE, eventMockCallback);
+
+        ParseObject parseObject = new ParseObject("Test");
+        parseObject.setObjectId("testId");
+
+        webSocketClientCallback.onMessage(createObjectDeleteMessage(subscriptionHandling.getRequestId(), parseObject).toString());
+
+        validateSameObject(eventMockCallback, parseQuery, parseObject);
+    }
+
+    @Test
+    public void testCreateEventWhenSubscribedToAnyCallback() throws Exception {
+        ParseQuery<ParseObject> parseQuery = new ParseQuery<>("test");
+        SubscriptionHandling<ParseObject> subscriptionHandling = createSubscription(parseQuery, mock(SubscriptionHandling.HandleSubscribeCallback.class));
+
+        SubscriptionHandling.HandleEventsCallback<ParseObject> eventsMockCallback = mock(SubscriptionHandling.HandleEventsCallback.class);
+        subscriptionHandling.handleEvents(eventsMockCallback);
+
+        ParseObject parseObject = new ParseObject("Test");
+        parseObject.setObjectId("testId");
+
+        webSocketClientCallback.onMessage(createObjectCreateMessage(subscriptionHandling.getRequestId(), parseObject).toString());
+
+        ArgumentCaptor<ParseObject> objectCaptor = ArgumentCaptor.forClass(ParseObject.class);
+        verify(eventsMockCallback, times(1)).onEvents(eq(parseQuery), eq(SubscriptionHandling.Event.CREATE), objectCaptor.capture());
+
+        ParseObject newParseObject = objectCaptor.getValue();
+
+        assertEquals(parseObject.getObjectId(), newParseObject.getObjectId());
+    }
+
+    @Test
+    public void testSubscriptionStoppedAfterUnsubscribe() throws Exception {
+        ParseQuery<ParseObject> parseQuery = new ParseQuery<>("test");
+        SubscriptionHandling<ParseObject> subscriptionHandling = createSubscription(parseQuery, mock(SubscriptionHandling.HandleSubscribeCallback.class));
+
+        SubscriptionHandling.HandleEventCallback<ParseObject> eventMockCallback = mock(SubscriptionHandling.HandleEventCallback.class);
+        subscriptionHandling.handleEvent(SubscriptionHandling.Event.CREATE, eventMockCallback);
+
+        SubscriptionHandling.HandleUnsubscribeCallback<ParseObject> unsubscribeMockCallback = mock(SubscriptionHandling.HandleUnsubscribeCallback.class);
+        subscriptionHandling.handleUnsubscribe(unsubscribeMockCallback);
+
+        parseLiveQueryClient.unsubscribe(parseQuery);
+        verify(webSocketClient, times(1)).send(any(String.class));
+        webSocketClientCallback.onMessage(createUnsubscribedMessage(subscriptionHandling.getRequestId()).toString());
+        verify(unsubscribeMockCallback, times(1)).onUnsubscribe(parseQuery);
+
+        ParseObject parseObject = new ParseObject("Test");
+        parseObject.setObjectId("testId");
+        webSocketClientCallback.onMessage(createObjectCreateMessage(subscriptionHandling.getRequestId(), parseObject).toString());
+
+        ArgumentCaptor<ParseObject> objectCaptor = ArgumentCaptor.forClass(ParseObject.class);
+        verify(eventMockCallback, times(0)).onEvent(eq(parseQuery), objectCaptor.capture());
+    }
+
+    @Test
+    public void testSubscriptionReplayedAfterReconnect() throws Exception {
+        SubscriptionHandling.HandleSubscribeCallback<ParseObject> subscribeMockCallback = mock(SubscriptionHandling.HandleSubscribeCallback.class);
+
+        ParseQuery<ParseObject> parseQuery = new ParseQuery<>("test");
+        createSubscription(parseQuery, subscribeMockCallback);
+
+        parseLiveQueryClient.disconnect();
+        reconnect();
+
+        verify(webSocketClient, times(2)).send(any(String.class));
+    }
+
+
+    private SubscriptionHandling<ParseObject> createSubscription(ParseQuery<ParseObject> parseQuery, SubscriptionHandling.HandleSubscribeCallback<ParseObject> subscribeMockCallback) throws Exception {
+        SubscriptionHandling<ParseObject> subscriptionHandling = parseLiveQueryClient.subscribe(parseQuery).handleSubscribe(subscribeMockCallback);
+        webSocketClientCallback.onMessage(createSubscribedMessage(subscriptionHandling.getRequestId()).toString());
+        return subscriptionHandling;
+    }
+
+    private void validateSameObject(SubscriptionHandling.HandleEventCallback<ParseObject> eventMockCallback, ParseQuery<ParseObject> parseQuery, ParseObject originalParseObject) {
+        ArgumentCaptor<ParseObject> objectCaptor = ArgumentCaptor.forClass(ParseObject.class);
+        verify(eventMockCallback, times(1)).onEvent(eq(parseQuery), objectCaptor.capture());
+
+        ParseObject newParseObject = objectCaptor.getValue();
+
+        assertEquals(originalParseObject.getObjectId(), newParseObject.getObjectId());
+    }
+
+    private void reconnect() {
+        parseLiveQueryClient.reconnect();
+        webSocketClientCallback.onOpen();
+        try {
+            webSocketClientCallback.onMessage(createConnectedMessage().toString());
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static JSONObject createConnectedMessage() throws JSONException {
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("op", "connected");
+        return jsonObject;
+    }
+
+    private static JSONObject createSubscribedMessage(int requestId) throws JSONException {
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("op", "subscribed");
+        jsonObject.put("clientId", 1);
+        jsonObject.put("requestId", requestId);
+        return jsonObject;
+    }
+
+    private static JSONObject createUnsubscribedMessage(int requestId) throws JSONException {
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("op", "unsubscribed");
+        jsonObject.put("requestId", requestId);
+        return jsonObject;
+    }
+
+    private static JSONObject createErrorMessage(int requestId) throws JSONException {
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("op", "error");
+        jsonObject.put("requestId", requestId);
+        jsonObject.put("code", 1);
+        jsonObject.put("error", "testError");
+        jsonObject.put("reconnect", true);
+        return jsonObject;
+    }
+
+    private static JSONObject createObjectCreateMessage(int requestId, ParseObject parseObject) throws JSONException {
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("op", "create");
+        jsonObject.put("requestId", requestId);
+        jsonObject.put("object", PointerEncoder.get().encodeRelatedObject(parseObject));
+        return jsonObject;
+    }
+
+    private static JSONObject createObjectEnterMessage(int requestId, ParseObject parseObject) throws JSONException {
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("op", "enter");
+        jsonObject.put("requestId", requestId);
+        jsonObject.put("object", PointerEncoder.get().encodeRelatedObject(parseObject));
+        return jsonObject;
+    }
+
+    private static JSONObject createObjectUpdateMessage(int requestId, ParseObject parseObject) throws JSONException {
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("op", "update");
+        jsonObject.put("requestId", requestId);
+        jsonObject.put("object", PointerEncoder.get().encodeRelatedObject(parseObject));
+        return jsonObject;
+    }
+
+    private static JSONObject createObjectLeaveMessage(int requestId, ParseObject parseObject) throws JSONException {
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("op", "leave");
+        jsonObject.put("requestId", requestId);
+        jsonObject.put("object", PointerEncoder.get().encodeRelatedObject(parseObject));
+        return jsonObject;
+    }
+
+    private static JSONObject createObjectDeleteMessage(int requestId, ParseObject parseObject) throws JSONException {
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("op", "delete");
+        jsonObject.put("requestId", requestId);
+        jsonObject.put("object", PointerEncoder.get().encodeRelatedObject(parseObject));
+        return jsonObject;
+    }
+
+}
