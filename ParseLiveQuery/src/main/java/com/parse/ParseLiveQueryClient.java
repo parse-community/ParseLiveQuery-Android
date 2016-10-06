@@ -26,60 +26,15 @@ public class ParseLiveQueryClient<T extends ParseObject> {
     private final SparseArray<Subscription<T>> subscriptions = new SparseArray<>();
     private final URI uri;
     private final WebSocketClientFactory webSocketClientFactory;
+    private final WebSocketClient.WebSocketClientCallback webSocketClientCallback;
 
     private WebSocketClient webSocketClient;
     private int requestIdCount = 1;
     private boolean userDisconnected = false;
 
-    private final WebSocketClient.WebSocketClientCallback webSocketClientCallback = new WebSocketClient.WebSocketClientCallback() {
-        @Override
-        public void onOpen() {
-            Log.d(LOG_TAG, "Socket opened");
-            sendOperationAsync(new ConnectClientOperation(applicationId, "")).continueWith(new Continuation<Void, Void>() {
-                public Void then(Task<Void> task) {
-                    Exception error = task.getError();
-                    if (error != null) {
-                        Log.d(LOG_TAG, "Error", error);
-                    }
-                    return null;
-                }
-            });
-        }
-
-        @Override
-        public void onMessage(String message) {
-            Log.d(LOG_TAG, "Socket onMessage " + message);
-            handleOperationAsync(message).continueWith(new Continuation<Void, Void>() {
-                public Void then(Task<Void> task) {
-                    Exception error = task.getError();
-                    if (error != null) {
-                        Log.d(LOG_TAG, "Error", error);
-                    }
-                    return null;
-                }
-            });
-        }
-
-        @Override
-        public void onClose() {
-            Log.d(LOG_TAG, "Socket onClose");
-        }
-
-        @Override
-        public void onError(Exception exception) {
-            Log.e(LOG_TAG, "Socket onError", exception);
-        }
-
-        @Override
-        public void stateChanged() {
-            Log.d(LOG_TAG, "Socket stateChanged");
-        }
-    };
-
     public ParseLiveQueryClient(URI uri) {
         this(uri, new TubeSockWebSocketClient.TubeWebSocketClientFactory(), Task.BACKGROUND_EXECUTOR);
     }
-
 
     /* package */ ParseLiveQueryClient(URI uri, WebSocketClientFactory webSocketClientFactory, Executor taskExecutor) {
         checkInit();
@@ -88,6 +43,7 @@ public class ParseLiveQueryClient<T extends ParseObject> {
         this.clientKey = ParsePlugins.get().clientKey();
         this.webSocketClientFactory = webSocketClientFactory;
         this.taskExecutor = taskExecutor;
+        this.webSocketClientCallback = getWebSocketClientCallback();
     }
 
 
@@ -268,6 +224,53 @@ public class ParseLiveQueryClient<T extends ParseObject> {
 
     private void sendUnsubscription(Subscription subscription) {
         sendOperationAsync(new UnsubscribeClientOperation(subscription.getRequestId()));
+    }
+
+    private WebSocketClient.WebSocketClientCallback getWebSocketClientCallback() {
+        return new WebSocketClient.WebSocketClientCallback() {
+            @Override
+            public void onOpen() {
+                Log.d(LOG_TAG, "Socket opened");
+                sendOperationAsync(new ConnectClientOperation(applicationId, "")).continueWith(new Continuation<Void, Void>() {
+                    public Void then(Task<Void> task) {
+                        Exception error = task.getError();
+                        if (error != null) {
+                            Log.d(LOG_TAG, "Error", error);
+                        }
+                        return null;
+                    }
+                });
+            }
+
+            @Override
+            public void onMessage(String message) {
+                Log.d(LOG_TAG, "Socket onMessage " + message);
+                handleOperationAsync(message).continueWith(new Continuation<Void, Void>() {
+                    public Void then(Task<Void> task) {
+                        Exception error = task.getError();
+                        if (error != null) {
+                            Log.d(LOG_TAG, "Error", error);
+                        }
+                        return null;
+                    }
+                });
+            }
+
+            @Override
+            public void onClose() {
+                Log.d(LOG_TAG, "Socket onClose");
+            }
+
+            @Override
+            public void onError(Exception exception) {
+                Log.e(LOG_TAG, "Socket onError", exception);
+            }
+
+            @Override
+            public void stateChanged() {
+                Log.d(LOG_TAG, "Socket stateChanged");
+            }
+        };
     }
 
 }

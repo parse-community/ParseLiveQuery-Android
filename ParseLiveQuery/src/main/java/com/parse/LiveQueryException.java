@@ -1,8 +1,5 @@
 package com.parse;
 
-/**
- *
- */
 public abstract class LiveQueryException extends Exception {
 
     private LiveQueryException() {
