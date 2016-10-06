@@ -235,7 +235,7 @@ public class ParseLiveQueryClient<T extends ParseObject> {
                     public Void then(Task<Void> task) {
                         Exception error = task.getError();
                         if (error != null) {
-                            Log.d(LOG_TAG, "Error", error);
+                            Log.d(LOG_TAG, "Error when connection client", error);
                         }
                         return null;
                     }
@@ -249,7 +249,7 @@ public class ParseLiveQueryClient<T extends ParseObject> {
                     public Void then(Task<Void> task) {
                         Exception error = task.getError();
                         if (error != null) {
-                            Log.d(LOG_TAG, "Error", error);
+                            Log.d(LOG_TAG, "Error handling message", error);
                         }
                         return null;
                     }
