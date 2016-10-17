@@ -19,8 +19,7 @@ import org.json.JSONObject;
         jsonObject.put("op", "subscribe");
         jsonObject.put("requestId", requestId);
 
-        ParseEncoder encoder = PointerEncoder.get();
-        JSONObject queryJsonObject = state.toJSON(encoder);
+        JSONObject queryJsonObject = state.toJSON(NoObjectsEncoder.get());
 
         jsonObject.put("query", queryJsonObject);
 
