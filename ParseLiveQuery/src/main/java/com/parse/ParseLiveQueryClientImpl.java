@@ -223,8 +223,21 @@ import static com.parse.Parse.checkInit;
         return subscriptions.get(requestId);
     }
 
-    private void sendSubscription(Subscription<T> subscription) {
-        sendOperationAsync(new SubscribeClientOperation<>(subscription.getRequestId(), subscription.getQueryState()));
+    private void sendSubscription(final Subscription<T> subscription) {
+        SubscribeClientOperation<T> op = new SubscribeClientOperation<>(subscription.getRequestId(), subscription.getQueryState());
+        // dispatch errors
+        sendOperationAsync(op).continueWith(new Continuation<Void, Void>() {
+            public Void then(Task<Void> task) {
+                Exception error = task.getError();
+                if (error != null) {
+                    if (error instanceof RuntimeException) {
+                        subscription.didEncounter(new LiveQueryException.UnknownException(
+                                "Error when subscribing", (RuntimeException) error), subscription.getQuery());
+                    }
+                }
+                return null;
+            }
+        });
     }
 
     private void sendUnsubscription(Subscription subscription) {
