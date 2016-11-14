@@ -14,12 +14,16 @@ import java.net.URI;
 import java.util.concurrent.Executor;
 
 import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertNotNull;
 import static junit.framework.Assert.assertTrue;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @RunWith(RobolectricGradleTestRunner.class)
 @Config(constants = BuildConfig.class, sdk = 21)
@@ -77,6 +81,34 @@ public class TestParseLiveQueryClient {
         webSocketClientCallback.onMessage(createUnsubscribedMessage(subscriptionHandling.getRequestId()).toString());
 
         verify(unsubscribeMockCallback, times(1)).onUnsubscribe(parseQuery);
+    }
+
+    @Test
+    public void testErrorWhileSubscribing() throws Exception {
+        ParseQuery.State state = mock(ParseQuery.State.class);
+        when(state.toJSON(any(ParseEncoder.class))).thenThrow(new RuntimeException("forced error"));
+
+        ParseQuery.State.Builder builder = mock(ParseQuery.State.Builder.class);
+        when(builder.build()).thenReturn(state);
+        ParseQuery query = mock(ParseQuery.class);
+        when(query.getBuilder()).thenReturn(builder);
+
+        SubscriptionHandling handling = parseLiveQueryClient.subscribe(query);
+
+        SubscriptionHandling.HandleErrorCallback<ParseObject> errorMockCallback = mock(SubscriptionHandling.HandleErrorCallback.class);
+        handling.handleError(errorMockCallback);
+
+        // Trigger a re-subscribe
+        webSocketClientCallback.onMessage(createConnectedMessage().toString());
+
+        // This will never get a chance to call op=subscribe, because an exception was thrown
+        verify(webSocketClient, never()).send(anyString());
+
+        ArgumentCaptor<LiveQueryException> errorCaptor = ArgumentCaptor.forClass(LiveQueryException.class);
+        verify(errorMockCallback, times(1)).onError(eq(query), errorCaptor.capture());
+
+        assertEquals("Error when subscribing", errorCaptor.getValue().getMessage());
+        assertNotNull(errorCaptor.getValue().getCause());
     }
 
     @Test
