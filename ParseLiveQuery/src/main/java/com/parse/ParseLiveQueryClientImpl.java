@@ -224,7 +224,8 @@ import static com.parse.Parse.checkInit;
     }
 
     private void sendSubscription(Subscription<T> subscription) {
-        sendOperationAsync(new SubscribeClientOperation<>(subscription.getRequestId(), subscription.getQueryState()));
+        String sessionToken = ParseUser.getCurrentSessionToken();
+        sendOperationAsync(new SubscribeClientOperation<>(subscription.getRequestId(), subscription.getQueryState(), sessionToken));
     }
 
     private void sendUnsubscription(Subscription subscription) {
@@ -236,7 +237,8 @@ import static com.parse.Parse.checkInit;
             @Override
             public void onOpen() {
                 Log.v(LOG_TAG, "Socket opened");
-                sendOperationAsync(new ConnectClientOperation(applicationId, "")).continueWith(new Continuation<Void, Void>() {
+                String sessionToken = ParseUser.getCurrentSessionToken();
+                sendOperationAsync(new ConnectClientOperation(applicationId, sessionToken)).continueWith(new Continuation<Void, Void>() {
                     public Void then(Task<Void> task) {
                         Exception error = task.getError();
                         if (error != null) {
