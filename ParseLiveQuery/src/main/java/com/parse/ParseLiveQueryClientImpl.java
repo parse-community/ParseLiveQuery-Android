@@ -221,9 +221,14 @@ import static com.parse.Parse.checkInit;
         return subscriptions.get(requestId);
     }
 
-    private void sendSubscription(Subscription<T> subscription) {
-        String sessionToken = ParseUser.getCurrentSessionToken();
-        sendOperationAsync(new SubscribeClientOperation<>(subscription.getRequestId(), subscription.getQueryState(), sessionToken));
+    private void sendSubscription(final Subscription<T> subscription) {
+        ParseUser.getCurrentSessionTokenAsync().onSuccessTask(new Continuation<String, Task<Void>>() {
+            @Override
+            public Task<Void> then(Task<String> task) throws Exception {
+                String sessionToken = task.getResult();
+                return sendOperationAsync(new SubscribeClientOperation<>(subscription.getRequestId(), subscription.getQueryState(), sessionToken));
+            }
+        });
     }
 
     private void sendUnsubscription(Subscription subscription) {
