@@ -7,19 +7,28 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 import org.robolectric.RobolectricGradleTestRunner;
 import org.robolectric.annotation.Config;
 
 import java.net.URI;
 import java.util.concurrent.Executor;
 
+import bolts.Task;
+
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertTrue;
+import static org.mockito.AdditionalMatchers.and;
+import static org.mockito.AdditionalMatchers.not;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyBoolean;
+import static org.mockito.Matchers.contains;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @RunWith(RobolectricGradleTestRunner.class)
 @Config(constants = BuildConfig.class, sdk = 21)
@@ -28,10 +37,23 @@ public class TestParseLiveQueryClient {
     private WebSocketClient webSocketClient;
     private WebSocketClient.WebSocketClientCallback webSocketClientCallback;
     private ParseLiveQueryClient<ParseObject> parseLiveQueryClient;
+    private ParseUser mockUser;
 
     @Before
     public void setUp() throws Exception {
         ParsePlugins.initialize("1234", "1234");
+
+        // Register a mock currentUserController to make getCurrentUser work
+        mockUser = mock(ParseUser.class);
+        ParseCurrentUserController currentUserController = mock(ParseCurrentUserController.class);
+        when(currentUserController.getAsync(anyBoolean())).thenAnswer(new Answer<Task<ParseUser>>() {
+            @Override
+            public Task<ParseUser> answer(InvocationOnMock invocation) throws Throwable {
+                return Task.forResult(mockUser);
+            }
+        });
+        ParseCorePlugins.getInstance().registerCurrentUserController(currentUserController);
+
         parseLiveQueryClient = ParseLiveQueryClient.Factory.getClient(new URI(""), new WebSocketClientFactory() {
             @Override
             public WebSocketClient createInstance(WebSocketClient.WebSocketClientCallback webSocketClientCallback, URI hostUrl) {
@@ -67,12 +89,14 @@ public class TestParseLiveQueryClient {
     @Test
     public void testUnsubscribeWhenSubscribedToCallback() throws Exception {
         ParseQuery<ParseObject> parseQuery = new ParseQuery<>("test");
-        SubscriptionHandling<ParseObject> subscriptionHandling = createSubscription(parseQuery, mock(SubscriptionHandling.HandleSubscribeCallback.class));
+        SubscriptionHandling<ParseObject> subscriptionHandling = createSubscription(parseQuery,
+                mock(SubscriptionHandling.HandleSubscribeCallback.class));
 
         parseLiveQueryClient.unsubscribe(parseQuery);
         verify(webSocketClient, times(1)).send(any(String.class));
 
-        SubscriptionHandling.HandleUnsubscribeCallback<ParseObject> unsubscribeMockCallback = mock(SubscriptionHandling.HandleUnsubscribeCallback.class);
+        SubscriptionHandling.HandleUnsubscribeCallback<ParseObject> unsubscribeMockCallback = mock(
+                SubscriptionHandling.HandleUnsubscribeCallback.class);
         subscriptionHandling.handleUnsubscribe(unsubscribeMockCallback);
         webSocketClientCallback.onMessage(createUnsubscribedMessage(subscriptionHandling.getRequestId()).toString());
 
@@ -82,7 +106,8 @@ public class TestParseLiveQueryClient {
     @Test
     public void testErrorWhenSubscribedToCallback() throws Exception {
         ParseQuery<ParseObject> parseQuery = new ParseQuery<>("test");
-        SubscriptionHandling<ParseObject> subscriptionHandling = createSubscription(parseQuery, mock(SubscriptionHandling.HandleSubscribeCallback.class));
+        SubscriptionHandling<ParseObject> subscriptionHandling = createSubscription(parseQuery,
+                mock(SubscriptionHandling.HandleSubscribeCallback.class));
 
         SubscriptionHandling.HandleErrorCallback<ParseObject> errorMockCallback = mock(SubscriptionHandling.HandleErrorCallback.class);
         subscriptionHandling.handleError(errorMockCallback);
@@ -103,7 +128,8 @@ public class TestParseLiveQueryClient {
     @Test
     public void testCreateEventWhenSubscribedToCallback() throws Exception {
         ParseQuery<ParseObject> parseQuery = new ParseQuery<>("test");
-        SubscriptionHandling<ParseObject> subscriptionHandling = createSubscription(parseQuery, mock(SubscriptionHandling.HandleSubscribeCallback.class));
+        SubscriptionHandling<ParseObject> subscriptionHandling = createSubscription(parseQuery,
+                mock(SubscriptionHandling.HandleSubscribeCallback.class));
 
         SubscriptionHandling.HandleEventCallback<ParseObject> eventMockCallback = mock(SubscriptionHandling.HandleEventCallback.class);
         subscriptionHandling.handleEvent(SubscriptionHandling.Event.CREATE, eventMockCallback);
@@ -119,7 +145,8 @@ public class TestParseLiveQueryClient {
     @Test
     public void testEnterEventWhenSubscribedToCallback() throws Exception {
         ParseQuery<ParseObject> parseQuery = new ParseQuery<>("test");
-        SubscriptionHandling<ParseObject> subscriptionHandling = createSubscription(parseQuery, mock(SubscriptionHandling.HandleSubscribeCallback.class));
+        SubscriptionHandling<ParseObject> subscriptionHandling = createSubscription(parseQuery,
+                mock(SubscriptionHandling.HandleSubscribeCallback.class));
 
         SubscriptionHandling.HandleEventCallback<ParseObject> eventMockCallback = mock(SubscriptionHandling.HandleEventCallback.class);
         subscriptionHandling.handleEvent(SubscriptionHandling.Event.ENTER, eventMockCallback);
@@ -135,7 +162,8 @@ public class TestParseLiveQueryClient {
     @Test
     public void testUpdateEventWhenSubscribedToCallback() throws Exception {
         ParseQuery<ParseObject> parseQuery = new ParseQuery<>("test");
-        SubscriptionHandling<ParseObject> subscriptionHandling = createSubscription(parseQuery, mock(SubscriptionHandling.HandleSubscribeCallback.class));
+        SubscriptionHandling<ParseObject> subscriptionHandling = createSubscription(parseQuery,
+                mock(SubscriptionHandling.HandleSubscribeCallback.class));
 
         SubscriptionHandling.HandleEventCallback<ParseObject> eventMockCallback = mock(SubscriptionHandling.HandleEventCallback.class);
         subscriptionHandling.handleEvent(SubscriptionHandling.Event.UPDATE, eventMockCallback);
@@ -151,7 +179,8 @@ public class TestParseLiveQueryClient {
     @Test
     public void testLeaveEventWhenSubscribedToCallback() throws Exception {
         ParseQuery<ParseObject> parseQuery = new ParseQuery<>("test");
-        SubscriptionHandling<ParseObject> subscriptionHandling = createSubscription(parseQuery, mock(SubscriptionHandling.HandleSubscribeCallback.class));
+        SubscriptionHandling<ParseObject> subscriptionHandling = createSubscription(parseQuery,
+                mock(SubscriptionHandling.HandleSubscribeCallback.class));
 
         SubscriptionHandling.HandleEventCallback<ParseObject> eventMockCallback = mock(SubscriptionHandling.HandleEventCallback.class);
         subscriptionHandling.handleEvent(SubscriptionHandling.Event.LEAVE, eventMockCallback);
@@ -164,11 +193,11 @@ public class TestParseLiveQueryClient {
         validateSameObject(eventMockCallback, parseQuery, parseObject);
     }
 
-
     @Test
     public void testDeleteEventWhenSubscribedToCallback() throws Exception {
         ParseQuery<ParseObject> parseQuery = new ParseQuery<>("test");
-        SubscriptionHandling<ParseObject> subscriptionHandling = createSubscription(parseQuery, mock(SubscriptionHandling.HandleSubscribeCallback.class));
+        SubscriptionHandling<ParseObject> subscriptionHandling = createSubscription(parseQuery,
+                mock(SubscriptionHandling.HandleSubscribeCallback.class));
 
         SubscriptionHandling.HandleEventCallback<ParseObject> eventMockCallback = mock(SubscriptionHandling.HandleEventCallback.class);
         subscriptionHandling.handleEvent(SubscriptionHandling.Event.DELETE, eventMockCallback);
@@ -184,7 +213,8 @@ public class TestParseLiveQueryClient {
     @Test
     public void testCreateEventWhenSubscribedToAnyCallback() throws Exception {
         ParseQuery<ParseObject> parseQuery = new ParseQuery<>("test");
-        SubscriptionHandling<ParseObject> subscriptionHandling = createSubscription(parseQuery, mock(SubscriptionHandling.HandleSubscribeCallback.class));
+        SubscriptionHandling<ParseObject> subscriptionHandling = createSubscription(parseQuery,
+                mock(SubscriptionHandling.HandleSubscribeCallback.class));
 
         SubscriptionHandling.HandleEventsCallback<ParseObject> eventsMockCallback = mock(SubscriptionHandling.HandleEventsCallback.class);
         subscriptionHandling.handleEvents(eventsMockCallback);
@@ -205,12 +235,14 @@ public class TestParseLiveQueryClient {
     @Test
     public void testSubscriptionStoppedAfterUnsubscribe() throws Exception {
         ParseQuery<ParseObject> parseQuery = new ParseQuery<>("test");
-        SubscriptionHandling<ParseObject> subscriptionHandling = createSubscription(parseQuery, mock(SubscriptionHandling.HandleSubscribeCallback.class));
+        SubscriptionHandling<ParseObject> subscriptionHandling = createSubscription(parseQuery,
+                mock(SubscriptionHandling.HandleSubscribeCallback.class));
 
         SubscriptionHandling.HandleEventCallback<ParseObject> eventMockCallback = mock(SubscriptionHandling.HandleEventCallback.class);
         subscriptionHandling.handleEvent(SubscriptionHandling.Event.CREATE, eventMockCallback);
 
-        SubscriptionHandling.HandleUnsubscribeCallback<ParseObject> unsubscribeMockCallback = mock(SubscriptionHandling.HandleUnsubscribeCallback.class);
+        SubscriptionHandling.HandleUnsubscribeCallback<ParseObject> unsubscribeMockCallback = mock(
+                SubscriptionHandling.HandleUnsubscribeCallback.class);
         subscriptionHandling.handleUnsubscribe(unsubscribeMockCallback);
 
         parseLiveQueryClient.unsubscribe(parseQuery);
@@ -239,14 +271,52 @@ public class TestParseLiveQueryClient {
         verify(webSocketClient, times(2)).send(any(String.class));
     }
 
+    @Test
+    public void testSessionTokenSentOnConnect() {
+        when(mockUser.getSessionToken()).thenReturn("the token");
+        parseLiveQueryClient.reconnect();
+        webSocketClientCallback.onOpen();
+        verify(webSocketClient, times(1)).send(contains("\"sessionToken\":\"the token\""));
+    }
 
-    private SubscriptionHandling<ParseObject> createSubscription(ParseQuery<ParseObject> parseQuery, SubscriptionHandling.HandleSubscribeCallback<ParseObject> subscribeMockCallback) throws Exception {
+    @Test
+    public void testEmptySessionTokenOnConnect() {
+        parseLiveQueryClient.reconnect();
+        webSocketClientCallback.onOpen();
+        verify(webSocketClient, times(1)).send(not(contains("\"sessionToken\":")));
+    }
+
+    @Test
+    public void testSessionTokenSentOnSubscribe() {
+        when(mockUser.getSessionToken()).thenReturn("the token");
+        when(webSocketClient.getState()).thenReturn(WebSocketClient.State.CONNECTED);
+        parseLiveQueryClient.subscribe(ParseQuery.getQuery("Test"));
+        verify(webSocketClient, times(1)).send(and(
+                contains("\"op\":\"subscribe\""),
+                contains("\"sessionToken\":\"the token\"")));
+    }
+
+    @Test
+    public void testEmptySessionTokenOnSubscribe() {
+        when(mockUser.getSessionToken()).thenReturn("the token");
+        when(webSocketClient.getState()).thenReturn(WebSocketClient.State.CONNECTED);
+        parseLiveQueryClient.subscribe(ParseQuery.getQuery("Test"));
+        verify(webSocketClient, times(1)).send(contains("\"op\":\"connect\""));
+        verify(webSocketClient, times(1)).send(and(
+                contains("\"op\":\"subscribe\""),
+                contains("\"sessionToken\":\"the token\"")));
+    }
+
+    private SubscriptionHandling<ParseObject> createSubscription(ParseQuery<ParseObject> parseQuery,
+            SubscriptionHandling.HandleSubscribeCallback<ParseObject> subscribeMockCallback) throws Exception {
         SubscriptionHandling<ParseObject> subscriptionHandling = parseLiveQueryClient.subscribe(parseQuery).handleSubscribe(subscribeMockCallback);
         webSocketClientCallback.onMessage(createSubscribedMessage(subscriptionHandling.getRequestId()).toString());
         return subscriptionHandling;
     }
 
-    private void validateSameObject(SubscriptionHandling.HandleEventCallback<ParseObject> eventMockCallback, ParseQuery<ParseObject> parseQuery, ParseObject originalParseObject) {
+    private void validateSameObject(SubscriptionHandling.HandleEventCallback<ParseObject> eventMockCallback,
+            ParseQuery<ParseObject> parseQuery,
+            ParseObject originalParseObject) {
         ArgumentCaptor<ParseObject> objectCaptor = ArgumentCaptor.forClass(ParseObject.class);
         verify(eventMockCallback, times(1)).onEvent(eq(parseQuery), objectCaptor.capture());
 
@@ -335,5 +405,4 @@ public class TestParseLiveQueryClient {
         jsonObject.put("object", PointerEncoder.get().encodeRelatedObject(parseObject));
         return jsonObject;
     }
-
 }
