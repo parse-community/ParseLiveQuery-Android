@@ -37,6 +37,7 @@ public class TestParseLiveQueryClient {
     private WebSocketClient webSocketClient;
     private WebSocketClient.WebSocketClientCallback webSocketClientCallback;
     private ParseLiveQueryClient<ParseObject> parseLiveQueryClient;
+
     private ParseUser mockUser;
 
     @Before
@@ -50,6 +51,12 @@ public class TestParseLiveQueryClient {
             @Override
             public Task<ParseUser> answer(InvocationOnMock invocation) throws Throwable {
                 return Task.forResult(mockUser);
+            }
+        });
+        when(currentUserController.getCurrentSessionTokenAsync()).thenAnswer(new Answer<Task<String>>() {
+            @Override
+            public Task<String> answer(InvocationOnMock invocation) throws Throwable {
+                return Task.forResult(mockUser.getSessionToken());
             }
         });
         ParseCorePlugins.getInstance().registerCurrentUserController(currentUserController);
