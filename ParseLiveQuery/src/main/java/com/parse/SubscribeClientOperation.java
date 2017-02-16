@@ -20,7 +20,7 @@ import org.json.JSONObject;
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("op", "subscribe");
         jsonObject.put("requestId", requestId);
-        if (sessionToken != null) jsonObject.put("sessionToken", sessionToken);
+        jsonObject.put("sessionToken", sessionToken);
 
         JSONObject queryJsonObject = state.toJSON(NoObjectsEncoder.get());
 
