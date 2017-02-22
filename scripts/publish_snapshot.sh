@@ -1,7 +1,7 @@
 #!/bin/bash
 # Publishes SNAPSHOTs
 
-REPO_SLUG=ParsePlatform/Parse-SDK-Android
+REPO_SLUG=ParsePlatform/ParseLiveQuery-Android
 BRANCH=master
 
 set -e

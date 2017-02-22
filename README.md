@@ -95,8 +95,8 @@ We want to make contributing to this project as easy and transparent as possible
 
  [build-status-svg]: https://img.shields.io/travis/ParsePlatform/ParseLiveQuery-Android/master.svg
  [build-status-link]: https://travis-ci.org/ParsePlatform/ParseLiveQuery-Android/branches
- [coverage-status-svg]: https://coveralls.io/repos/ParsePlatform/ParseLiveQuery-Android/badge.svg?branch=master&service=github
- [coverage-status-link]: https://coveralls.io/github/ParsePlatform/ParseLiveQuery-Android?branch=master
+ [coverage-status-svg]: https://img.shields.io/codecov/c/github/ParsePlatform/ParseLiveQuery-Android/master.svg
+ [coverage-status-link]: https://codecov.io/github/ParsePlatform/ParseLiveQuery-Android?branch=master 
  [maven-svg]: https://maven-badges.herokuapp.com/maven-central/com.parse/parse-livequery-android/badge.svg?style=flat
  [maven-link]: https://maven-badges.herokuapp.com/maven-central/com.parse/parse-livequery-android
 
