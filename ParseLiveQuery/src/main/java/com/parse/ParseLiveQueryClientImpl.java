@@ -1,6 +1,5 @@
 package com.parse;
 
-
 import android.util.Log;
 import android.util.SparseArray;
 
@@ -179,7 +178,6 @@ import static com.parse.Parse.checkInit;
         } catch (JSONException e) {
             throw new LiveQueryException.InvalidResponseException(message);
         }
-
     }
 
     private void handleSubscribedEvent(JSONObject jsonObject) throws JSONException {
@@ -224,17 +222,25 @@ import static com.parse.Parse.checkInit;
     }
 
     private void sendSubscription(final Subscription<T> subscription) {
-        SubscribeClientOperation<T> op = new SubscribeClientOperation<>(subscription.getRequestId(), subscription.getQueryState());
-        // dispatch errors
-        sendOperationAsync(op).continueWith(new Continuation<Void, Void>() {
-            public Void then(Task<Void> task) {
-                Exception error = task.getError();
-                if (error != null) {
-                    if (error instanceof RuntimeException) {
-                        subscription.didEncounter(new LiveQueryException.UnknownException(
-                                "Error when subscribing", (RuntimeException) error), subscription.getQuery());
+        ParseUser.getCurrentSessionTokenAsync().onSuccess(new Continuation<String, Void>() {
+            @Override
+            public Void then(Task<String> task) throws Exception {
+                String sessionToken = task.getResult();
+                SubscribeClientOperation<T> op = new SubscribeClientOperation<>(subscription.getRequestId(), subscription.getQueryState(), sessionToken);
+                
+                // dispatch errors
+                sendOperationAsync(op).continueWith(new Continuation<Void, Void>() {
+                    public Void then(Task<Void> task) {
+                        Exception error = task.getError();
+                        if (error != null) {
+                            if (error instanceof RuntimeException) {
+                                subscription.didEncounter(new LiveQueryException.UnknownException(
+                                        "Error when subscribing", (RuntimeException) error), subscription.getQuery());
+                            }
+                        }
+                        return null;
                     }
-                }
+                });
                 return null;
             }
         });
@@ -249,7 +255,13 @@ import static com.parse.Parse.checkInit;
             @Override
             public void onOpen() {
                 Log.v(LOG_TAG, "Socket opened");
-                sendOperationAsync(new ConnectClientOperation(applicationId, "")).continueWith(new Continuation<Void, Void>() {
+                ParseUser.getCurrentSessionTokenAsync().onSuccessTask(new Continuation<String, Task<Void>>() {
+                    @Override
+                    public Task<Void> then(Task<String> task) throws Exception {
+                        String sessionToken = task.getResult();
+                        return sendOperationAsync(new ConnectClientOperation(applicationId, sessionToken));
+                    }
+                }).continueWith(new Continuation<Void, Void>() {
                     public Void then(Task<Void> task) {
                         Exception error = task.getError();
                         if (error != null) {
@@ -290,5 +302,4 @@ import static com.parse.Parse.checkInit;
             }
         };
     }
-
 }

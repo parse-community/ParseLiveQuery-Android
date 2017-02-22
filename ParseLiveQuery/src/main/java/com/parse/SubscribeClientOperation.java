@@ -7,10 +7,12 @@ import org.json.JSONObject;
 
     private final int requestId;
     private final ParseQuery.State<T> state;
+    private final String sessionToken;
 
-    /* package */ SubscribeClientOperation(int requestId, final ParseQuery.State<T> state) {
+    /* package */ SubscribeClientOperation(int requestId, ParseQuery.State<T> state, String sessionToken) {
         this.requestId = requestId;
         this.state = state;
+        this.sessionToken = sessionToken;
     }
 
     @Override
@@ -18,8 +20,9 @@ import org.json.JSONObject;
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("op", "subscribe");
         jsonObject.put("requestId", requestId);
+        jsonObject.put("sessionToken", sessionToken);
 
-        JSONObject queryJsonObject = state.toJSON(NoObjectsEncoder.get());
+        JSONObject queryJsonObject = state.toJSON(PointerEncoder.get());
 
         jsonObject.put("query", queryJsonObject);
 
