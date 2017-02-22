@@ -10,6 +10,23 @@ public abstract class LiveQueryException extends Exception {
         super(detailMessage);
     }
 
+    private LiveQueryException(String detailMessage, Throwable cause) {
+        super(detailMessage, cause);
+    }
+
+    private LiveQueryException(Throwable cause) {
+        super(cause);
+    }
+
+    /**
+     * An error that is reported when any other unknown {@link RuntimeException} occurs unexpectedly.
+     */
+    public static class UnknownException extends LiveQueryException {
+        /* package */ UnknownException(String detailMessage, RuntimeException cause) {
+            super(detailMessage, cause);
+        }
+    }
+
     /**
      * An error that is reported when the server returns a response that cannot be parsed.
      */

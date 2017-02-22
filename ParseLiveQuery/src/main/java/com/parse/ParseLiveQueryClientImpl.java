@@ -222,11 +222,26 @@ import static com.parse.Parse.checkInit;
     }
 
     private void sendSubscription(final Subscription<T> subscription) {
-        ParseUser.getCurrentSessionTokenAsync().onSuccessTask(new Continuation<String, Task<Void>>() {
+        ParseUser.getCurrentSessionTokenAsync().onSuccess(new Continuation<String, Void>() {
             @Override
-            public Task<Void> then(Task<String> task) throws Exception {
+            public Void then(Task<String> task) throws Exception {
                 String sessionToken = task.getResult();
-                return sendOperationAsync(new SubscribeClientOperation<>(subscription.getRequestId(), subscription.getQueryState(), sessionToken));
+                SubscribeClientOperation<T> op = new SubscribeClientOperation<>(subscription.getRequestId(), subscription.getQueryState(), sessionToken);
+                
+                // dispatch errors
+                sendOperationAsync(op).continueWith(new Continuation<Void, Void>() {
+                    public Void then(Task<Void> task) {
+                        Exception error = task.getError();
+                        if (error != null) {
+                            if (error instanceof RuntimeException) {
+                                subscription.didEncounter(new LiveQueryException.UnknownException(
+                                        "Error when subscribing", (RuntimeException) error), subscription.getQuery());
+                            }
+                        }
+                        return null;
+                    }
+                });
+                return null;
             }
         });
     }
