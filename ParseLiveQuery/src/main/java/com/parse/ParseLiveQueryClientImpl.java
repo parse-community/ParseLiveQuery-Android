@@ -1,6 +1,5 @@
 package com.parse;
 
-
 import android.util.Log;
 import android.util.SparseArray;
 
@@ -179,7 +178,6 @@ import static com.parse.Parse.checkInit;
         } catch (JSONException e) {
             throw new LiveQueryException.InvalidResponseException(message);
         }
-
     }
 
     private void handleSubscribedEvent(JSONObject jsonObject) throws JSONException {
@@ -223,8 +221,14 @@ import static com.parse.Parse.checkInit;
         return subscriptions.get(requestId);
     }
 
-    private void sendSubscription(Subscription<T> subscription) {
-        sendOperationAsync(new SubscribeClientOperation<>(subscription.getRequestId(), subscription.getQueryState()));
+    private void sendSubscription(final Subscription<T> subscription) {
+        ParseUser.getCurrentSessionTokenAsync().onSuccessTask(new Continuation<String, Task<Void>>() {
+            @Override
+            public Task<Void> then(Task<String> task) throws Exception {
+                String sessionToken = task.getResult();
+                return sendOperationAsync(new SubscribeClientOperation<>(subscription.getRequestId(), subscription.getQueryState(), sessionToken));
+            }
+        });
     }
 
     private void sendUnsubscription(Subscription subscription) {
@@ -236,7 +240,13 @@ import static com.parse.Parse.checkInit;
             @Override
             public void onOpen() {
                 Log.v(LOG_TAG, "Socket opened");
-                sendOperationAsync(new ConnectClientOperation(applicationId, "")).continueWith(new Continuation<Void, Void>() {
+                ParseUser.getCurrentSessionTokenAsync().onSuccessTask(new Continuation<String, Task<Void>>() {
+                    @Override
+                    public Task<Void> then(Task<String> task) throws Exception {
+                        String sessionToken = task.getResult();
+                        return sendOperationAsync(new ConnectClientOperation(applicationId, sessionToken));
+                    }
+                }).continueWith(new Continuation<Void, Void>() {
                     public Void then(Task<Void> task) {
                         Exception error = task.getError();
                         if (error != null) {
@@ -277,5 +287,4 @@ import static com.parse.Parse.checkInit;
             }
         };
     }
-
 }
