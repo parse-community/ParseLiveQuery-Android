@@ -20,7 +20,6 @@ script:
   - ./gradlew clean testDebugUnitTest jacocoTestReport --info
 
 after_success:
-  - ./gradlew coveralls
   - codecov
   - ./scripts/publish_snapshot.sh
 
