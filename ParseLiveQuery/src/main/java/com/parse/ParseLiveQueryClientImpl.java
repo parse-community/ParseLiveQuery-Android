@@ -201,7 +201,7 @@ import static com.parse.Parse.checkInit;
         final int requestId = jsonObject.getInt("requestId");
         final Subscription<T> subscription = subscriptionForRequestId(requestId);
         if (subscription != null) {
-            T object = ParseObject.fromJSON(jsonObject.getJSONObject("object"), subscription.getQueryState().className(), subscription.getQueryState().selectedKeys() == null);
+            T object = ParseObject.fromJSON(jsonObject.getJSONObject("object"), subscription.getQueryState().className(), ParseDecoder.get(), subscription.getQueryState().selectedKeys());
             subscription.didReceive(event, subscription.getQuery(), object);
         }
     }
