@@ -116,7 +116,7 @@ public class TestParseLiveQueryClient {
     @Test
     public void testErrorWhileSubscribing() throws Exception {
         ParseQuery.State state = mock(ParseQuery.State.class);
-        when(state.toJSON(any(ParseEncoder.class))).thenThrow(new RuntimeException("forced error"));
+        when(state.constraints()).thenThrow(new RuntimeException("forced error"));
 
         ParseQuery.State.Builder builder = mock(ParseQuery.State.Builder.class);
         when(builder.build()).thenReturn(state);
