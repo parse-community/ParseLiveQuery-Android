@@ -40,7 +40,7 @@ android {
 }
 
 dependencies {
-    compile 'com.parse:parse-android:1.13.1'
+    compile 'com.parse:parse-android:1.14.0'
     compile 'com.firebase:tubesock:0.0.12'
     compile 'com.parse.bolts:bolts-tasks:1.4.0'
 
