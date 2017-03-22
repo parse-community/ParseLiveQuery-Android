@@ -27,7 +27,7 @@ import org.json.JSONObject;
 
         // TODO: add support for fields
         // https://github.com/ParsePlatform/parse-server/issues/3671
-        
+
         PointerEncoder pointerEncoder = PointerEncoder.get();
         queryJsonObject.put("where", pointerEncoder.encode(state.constraints()));
 
