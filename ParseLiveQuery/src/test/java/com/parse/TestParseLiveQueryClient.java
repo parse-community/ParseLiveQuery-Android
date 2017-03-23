@@ -13,6 +13,8 @@ import org.robolectric.RobolectricGradleTestRunner;
 import org.robolectric.annotation.Config;
 
 import java.net.URI;
+import java.util.LinkedList;
+import java.util.Queue;
 import java.util.concurrent.Executor;
 
 import bolts.Task;
@@ -23,8 +25,8 @@ import static junit.framework.Assert.assertTrue;
 import static org.mockito.AdditionalMatchers.and;
 import static org.mockito.AdditionalMatchers.not;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.anyBoolean;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.contains;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
@@ -345,6 +347,28 @@ public class TestParseLiveQueryClient {
                 contains("\"sessionToken\":\"the token\"")));
     }
 
+    @Test
+    public void testDisconnectOnBackgroundThread() throws Exception {
+        PauseableExecutor executor = new PauseableExecutor();
+        // Recreate the client with a PauseableExecutor
+        parseLiveQueryClient = ParseLiveQueryClient.Factory.getClient(new URI(""), new WebSocketClientFactory() {
+            @Override
+            public WebSocketClient createInstance(WebSocketClient.WebSocketClientCallback webSocketClientCallback, URI hostUrl) {
+                TestParseLiveQueryClient.this.webSocketClientCallback = webSocketClientCallback;
+                webSocketClient = mock(WebSocketClient.class);
+                return webSocketClient;
+            }
+        }, executor);
+
+        reconnect();
+        executor.pause();
+
+        parseLiveQueryClient.disconnect();
+        verify(webSocketClient, never()).close();
+        assertTrue(executor.advanceOne());
+        verify(webSocketClient, times(1)).close();
+    }
+
     private SubscriptionHandling<ParseObject> createSubscription(ParseQuery<ParseObject> parseQuery,
             SubscriptionHandling.HandleSubscribeCallback<ParseObject> subscribeMockCallback) throws Exception {
         SubscriptionHandling<ParseObject> subscriptionHandling = parseLiveQueryClient.subscribe(parseQuery).handleSubscribe(subscribeMockCallback);
@@ -442,5 +466,40 @@ public class TestParseLiveQueryClient {
         jsonObject.put("requestId", requestId);
         jsonObject.put("object", PointerEncoder.get().encodeRelatedObject(parseObject));
         return jsonObject;
+    }
+
+    private static class PauseableExecutor implements Executor {
+        private boolean isPaused = false;
+        private final Queue<Runnable> queue = new LinkedList<>();
+
+        void pause() {
+            isPaused = true;
+        }
+
+        void unpause() {
+            if (isPaused) {
+                isPaused = false;
+
+                //noinspection StatementWithEmptyBody
+                while (advanceOne()) {
+                    // keep going
+                }
+            }
+        }
+
+        boolean advanceOne() {
+            Runnable next = queue.poll();
+            if (next != null) next.run();
+            return next != null;
+        }
+
+        @Override
+        public void execute(Runnable runnable) {
+            if (isPaused) {
+                queue.add(runnable);
+            } else {
+                runnable.run();
+            }
+        }
     }
 }
