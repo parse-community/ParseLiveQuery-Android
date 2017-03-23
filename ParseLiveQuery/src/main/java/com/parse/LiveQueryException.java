@@ -1,5 +1,7 @@
 package com.parse;
 
+import java.util.Locale;
+
 public abstract class LiveQueryException extends Exception {
 
     private LiveQueryException() {
@@ -53,7 +55,7 @@ public abstract class LiveQueryException extends Exception {
         private final String expectedKey;
 
         /* package */ InvalidJSONException(String json, String expectedKey) {
-            super(String.format("Invalid JSON; expectedKey: %s, json: %s", expectedKey, json));
+            super(String.format(Locale.US, "Invalid JSON; expectedKey: %s, json: %s", expectedKey, json));
             this.json = json;
             this.expectedKey = expectedKey;
         }
@@ -77,7 +79,7 @@ public abstract class LiveQueryException extends Exception {
         private final boolean reconnect;
 
         public ServerReportedException(int code, String error, boolean reconnect) {
-            super(String.format("Server reported error; code: %d, error: %s, reconnect: %b", code, error, reconnect));
+            super(String.format(Locale.US, "Server reported error; code: %d, error: %s, reconnect: %b", code, error, reconnect));
             this.code = code;
             this.error = error;
             this.reconnect = reconnect;
