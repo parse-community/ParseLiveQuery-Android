@@ -88,19 +88,21 @@ import static com.parse.Parse.checkInit;
 
     @Override
     public void reconnect() {
-        if (webSocketClient != null) {
-            webSocketClient.close();
-        }
-        this.webSocketClient = webSocketClientFactory.createInstance(webSocketClientCallback, uri);
-        this.webSocketClient.open();
+        disconnectAsync().continueWith(new Continuation<Void, Void>() {
+            @Override
+            public Void then(Task<Void> task) throws Exception {
+                webSocketClient = webSocketClientFactory.createInstance(webSocketClientCallback, uri);
+                webSocketClient.open();
+                return null;
+            }
+        });
         userInitiatedDisconnect = false;
     }
 
     @Override
     public void disconnect() {
         if (webSocketClient != null) {
-            webSocketClient.close();
-            webSocketClient = null;
+            disconnectAsync();
             userInitiatedDisconnect = true;
         }
     }
@@ -129,6 +131,20 @@ import static com.parse.Parse.checkInit;
                     Log.d(LOG_TAG, "Sending over websocket: " + jsonString);
                 }
                 webSocketClient.send(jsonString);
+                return null;
+            }
+        }, taskExecutor);
+    }
+
+    private Task<Void> disconnectAsync() {
+        return Task.call(new Callable<Void>() {
+            @Override
+            public Void call() throws Exception {
+                if (webSocketClient != null) {
+                    webSocketClient.close();
+                    webSocketClient = null;
+                }
+
                 return null;
             }
         }, taskExecutor);
@@ -230,7 +246,7 @@ import static com.parse.Parse.checkInit;
             public Void then(Task<String> task) throws Exception {
                 String sessionToken = task.getResult();
                 SubscribeClientOperation<T> op = new SubscribeClientOperation<>(subscription.getRequestId(), subscription.getQueryState(), sessionToken);
-                
+
                 // dispatch errors
                 sendOperationAsync(op).continueWith(new Continuation<Void, Void>() {
                     public Void then(Task<Void> task) {
