@@ -8,45 +8,45 @@ import com.parse.ParseUser;
 @ParseClassName("Message")
 public class Message extends ParseObject {
 
-    ParseUser parseUser;
-    String authorName;
-    String message;
-    Room room;
+    private final String PARSE_USER_KEY = "parseUser";
+    private final String AUTHOR_KEY = "author";
+    private final String MESSAGE_KEY = "message";
+    private final String ROOM_KEY = "room";
 
     public Message() {
 
     }
 
     public ParseUser getParseUser() {
-        return parseUser;
+        return getParseUser(PARSE_USER_KEY);
     }
 
     public void setParseUser(ParseUser parseUser) {
-        this.parseUser = parseUser;
+        put(PARSE_USER_KEY, parseUser);
     }
 
     public String getAuthorName() {
-        return authorName;
+        return getString(AUTHOR_KEY);
     }
 
     public void setAuthorName(String authorName) {
-        this.authorName = authorName;
+        put(AUTHOR_KEY, authorName);
     }
 
     public String getMessage() {
-        return message;
+        return getString(MESSAGE_KEY);
     }
 
     public void setMessage(String message) {
-        this.message = message;
+        put(MESSAGE_KEY, message);
     }
 
     public Room getRoom() {
-        return room;
+        return (Room) get(ROOM_KEY);
     }
 
     public void setRoom(Room room) {
-        this.room = room;
+        put(ROOM_KEY, room);
     }
 
     @Override

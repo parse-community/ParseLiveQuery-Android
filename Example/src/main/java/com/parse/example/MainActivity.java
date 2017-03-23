@@ -54,15 +54,7 @@ public class MainActivity extends AppCompatActivity {
                 }
                 mRoom = room;
 
-                ParseLiveQueryClient<Message> parseLiveQueryClient = null;
-
-                try {
-                    parseLiveQueryClient
-                            = ParseLiveQueryClient.Factory.getClient(new URI(wsURL));
-                } catch (URISyntaxException uriException) {
-                    Log.d(DEBUG_TAG, "Could not connect");
-
-                }
+                ParseLiveQueryClient parseLiveQueryClient = ParseLiveQueryClient.Factory.getClient();
 
                 if (parseLiveQueryClient != null) {
                     // op=subscribe, className=Message, roomName=test, requestId=1

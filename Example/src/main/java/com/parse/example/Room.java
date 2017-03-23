@@ -6,6 +6,8 @@ import com.parse.ParseObject;
 @ParseClassName("Room")
 public class Room extends ParseObject {
 
+    private final String NAME_KEY = "name";
+
     public Room() {
 
     }
@@ -13,11 +15,11 @@ public class Room extends ParseObject {
     String name;
 
     public String getName() {
-        return name;
+        return getString(NAME_KEY);
     }
 
     public void setName(String name) {
-        this.name = name;
+        put(NAME_KEY, name);
     }
 
     @Override
