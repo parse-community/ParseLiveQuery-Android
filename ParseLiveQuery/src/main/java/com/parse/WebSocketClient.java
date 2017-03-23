@@ -17,7 +17,7 @@ package com.parse;
 
         void onClose();
 
-        void onError(Exception exception);
+        void onError(Throwable exception);
 
         void stateChanged();
     }
