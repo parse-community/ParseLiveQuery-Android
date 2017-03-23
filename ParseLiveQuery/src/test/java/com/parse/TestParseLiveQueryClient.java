@@ -39,6 +39,7 @@ import static org.mockito.Mockito.when;
 @Config(constants = BuildConfig.class, sdk = 21)
 public class TestParseLiveQueryClient {
 
+    private PauseableExecutor executor;
     private WebSocketClient webSocketClient;
     private WebSocketClient.WebSocketClientCallback webSocketClientCallback;
     private ParseLiveQueryClient<ParseObject> parseLiveQueryClient;
@@ -66,6 +67,8 @@ public class TestParseLiveQueryClient {
         });
         ParseCorePlugins.getInstance().registerCurrentUserController(currentUserController);
 
+        executor = new PauseableExecutor();
+
         parseLiveQueryClient = ParseLiveQueryClient.Factory.getClient(new URI(""), new WebSocketClientFactory() {
             @Override
             public WebSocketClient createInstance(WebSocketClient.WebSocketClientCallback webSocketClientCallback, URI hostUrl) {
@@ -73,12 +76,7 @@ public class TestParseLiveQueryClient {
                 webSocketClient = mock(WebSocketClient.class);
                 return webSocketClient;
             }
-        }, new Executor() {
-            @Override
-            public void execute(Runnable command) {
-                command.run();
-            }
-        });
+        }, executor);
         reconnect();
     }
 
@@ -349,18 +347,6 @@ public class TestParseLiveQueryClient {
 
     @Test
     public void testDisconnectOnBackgroundThread() throws Exception {
-        PauseableExecutor executor = new PauseableExecutor();
-        // Recreate the client with a PauseableExecutor
-        parseLiveQueryClient = ParseLiveQueryClient.Factory.getClient(new URI(""), new WebSocketClientFactory() {
-            @Override
-            public WebSocketClient createInstance(WebSocketClient.WebSocketClientCallback webSocketClientCallback, URI hostUrl) {
-                TestParseLiveQueryClient.this.webSocketClientCallback = webSocketClientCallback;
-                webSocketClient = mock(WebSocketClient.class);
-                return webSocketClient;
-            }
-        }, executor);
-
-        reconnect();
         executor.pause();
 
         parseLiveQueryClient.disconnect();
