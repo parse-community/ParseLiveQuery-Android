@@ -125,6 +125,9 @@ import static com.parse.Parse.checkInit;
             public Void call() throws Exception {
                 JSONObject jsonEncoded = clientOperation.getJSONObjectRepresentation();
                 String jsonString = jsonEncoded.toString();
+                if (Parse.getLogLevel() <= Parse.LOG_LEVEL_DEBUG) {
+                    Log.d(LOG_TAG, "Sending over websocket: " + jsonString);
+                }
                 webSocketClient.send(jsonString);
                 return null;
             }
