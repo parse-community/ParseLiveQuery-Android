@@ -311,7 +311,7 @@ import static com.parse.Parse.checkInit;
             }
 
             @Override
-            public void onError(Exception exception) {
+            public void onError(Throwable exception) {
                 Log.e(LOG_TAG, "Socket onError", exception);
             }
 
