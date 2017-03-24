@@ -164,6 +164,48 @@ public class TestParseLiveQueryClient {
     }
 
     @Test
+    public void testHeterogeneousSubscriptions() throws Exception {
+        ParseObject.registerSubclass(MockClassA.class);
+        ParseObject.registerSubclass(MockClassB.class);
+
+        ParseQuery<MockClassA> query1 = ParseQuery.getQuery(MockClassA.class);
+        ParseQuery<MockClassB> query2 = ParseQuery.getQuery(MockClassB.class);
+        SubscriptionHandling<MockClassA> handle1 = parseLiveQueryClient.subscribe((ParseQuery) query1);
+        SubscriptionHandling<MockClassB> handle2 = parseLiveQueryClient.subscribe((ParseQuery) query2);
+
+        handle1.handleError(new SubscriptionHandling.HandleErrorCallback<MockClassA>() {
+            @Override
+            public void onError(ParseQuery<MockClassA> query, LiveQueryException exception) {
+                throw new RuntimeException(exception);
+            }
+        });
+        handle2.handleError(new SubscriptionHandling.HandleErrorCallback<MockClassB>() {
+            @Override
+            public void onError(ParseQuery<MockClassB> query, LiveQueryException exception) {
+                throw new RuntimeException(exception);
+            }
+        });
+
+        SubscriptionHandling.HandleEventCallback<MockClassA> eventMockCallback1 = mock(SubscriptionHandling.HandleEventCallback.class);
+        SubscriptionHandling.HandleEventCallback<MockClassB> eventMockCallback2 = mock(SubscriptionHandling.HandleEventCallback.class);
+
+        handle1.handleEvent(SubscriptionHandling.Event.CREATE, eventMockCallback1);
+        handle2.handleEvent(SubscriptionHandling.Event.CREATE, eventMockCallback2);
+
+        ParseObject parseObject1 = new MockClassA();
+        parseObject1.setObjectId("testId1");
+
+        ParseObject parseObject2 = new MockClassB();
+        parseObject2.setObjectId("testId2");
+
+        webSocketClientCallback.onMessage(createObjectCreateMessage(handle1.getRequestId(), parseObject1).toString());
+        webSocketClientCallback.onMessage(createObjectCreateMessage(handle2.getRequestId(), parseObject2).toString());
+
+        validateSameObject((SubscriptionHandling.HandleEventCallback) eventMockCallback1, (ParseQuery) query1, parseObject1);
+        validateSameObject((SubscriptionHandling.HandleEventCallback) eventMockCallback2, (ParseQuery) query2, parseObject2);
+    }
+
+    @Test
     public void testCreateEventWhenSubscribedToCallback() throws Exception {
         ParseQuery<ParseObject> parseQuery = new ParseQuery<>("test");
         SubscriptionHandling<ParseObject> subscriptionHandling = createSubscription(parseQuery,
@@ -370,6 +412,7 @@ public class TestParseLiveQueryClient {
 
         ParseObject newParseObject = objectCaptor.getValue();
 
+        assertEquals(originalParseObject.getClassName(), newParseObject.getClassName());
         assertEquals(originalParseObject.getObjectId(), newParseObject.getObjectId());
     }
 
@@ -487,5 +530,13 @@ public class TestParseLiveQueryClient {
                 runnable.run();
             }
         }
+    }
+
+    @ParseClassName("MockA")
+    static class MockClassA extends ParseObject {
+    }
+
+    @ParseClassName("MockB")
+    static class MockClassB extends ParseObject {
     }
 }
