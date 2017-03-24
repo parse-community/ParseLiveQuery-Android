@@ -7,6 +7,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.robolectric.RobolectricGradleTestRunner;
@@ -42,7 +43,7 @@ public class TestParseLiveQueryClient {
     private PauseableExecutor executor;
     private WebSocketClient webSocketClient;
     private WebSocketClient.WebSocketClientCallback webSocketClientCallback;
-    private ParseLiveQueryClient<ParseObject> parseLiveQueryClient;
+    private ParseLiveQueryClient parseLiveQueryClient;
 
     private ParseUser mockUser;
 
@@ -170,8 +171,8 @@ public class TestParseLiveQueryClient {
 
         ParseQuery<MockClassA> query1 = ParseQuery.getQuery(MockClassA.class);
         ParseQuery<MockClassB> query2 = ParseQuery.getQuery(MockClassB.class);
-        SubscriptionHandling<MockClassA> handle1 = parseLiveQueryClient.subscribe((ParseQuery) query1);
-        SubscriptionHandling<MockClassB> handle2 = parseLiveQueryClient.subscribe((ParseQuery) query2);
+        SubscriptionHandling<MockClassA> handle1 = parseLiveQueryClient.subscribe(query1);
+        SubscriptionHandling<MockClassB> handle2 = parseLiveQueryClient.subscribe(query2);
 
         handle1.handleError(new SubscriptionHandling.HandleErrorCallback<MockClassA>() {
             @Override
