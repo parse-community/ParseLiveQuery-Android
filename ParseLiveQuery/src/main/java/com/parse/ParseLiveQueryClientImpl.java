@@ -15,14 +15,14 @@ import bolts.Task;
 
 import static com.parse.Parse.checkInit;
 
-/* package */ class ParseLiveQueryClientImpl<T extends ParseObject> implements ParseLiveQueryClient<T> {
+/* package */ class ParseLiveQueryClientImpl implements ParseLiveQueryClient {
 
     private static final String LOG_TAG = "ParseLiveQueryClient";
 
     private final Executor taskExecutor;
     private final String applicationId;
     private final String clientKey;
-    private final SparseArray<Subscription<T>> subscriptions = new SparseArray<>();
+    private final SparseArray<Subscription<? extends ParseObject>> subscriptions = new SparseArray<>();
     private final URI uri;
     private final WebSocketClientFactory webSocketClientFactory;
     private final WebSocketClient.WebSocketClientCallback webSocketClientCallback;
@@ -46,7 +46,7 @@ import static com.parse.Parse.checkInit;
     }
 
     @Override
-    public SubscriptionHandling<T> subscribe(ParseQuery<T> query) {
+    public <T extends ParseObject> SubscriptionHandling<T> subscribe(ParseQuery<T> query) {
         int requestId = requestIdGenerator();
         Subscription<T> subscription = new Subscription<>(requestId, query);
         subscriptions.append(requestId, subscription);
@@ -63,7 +63,7 @@ import static com.parse.Parse.checkInit;
     }
 
     @Override
-    public void unsubscribe(final ParseQuery<T> query) {
+    public <T extends ParseObject> void unsubscribe(final ParseQuery<T> query) {
         if (query != null) {
             for (int i = 0; i < subscriptions.size(); i++) {
                 Subscription subscription = subscriptions.valueAt(i);
@@ -75,7 +75,7 @@ import static com.parse.Parse.checkInit;
     }
 
     @Override
-    public void unsubscribe(final ParseQuery<T> query, final SubscriptionHandling subscriptionHandling) {
+    public <T extends ParseObject> void unsubscribe(final ParseQuery<T> query, final SubscriptionHandling<T> subscriptionHandling) {
         if (query != null && subscriptionHandling != null) {
             for (int i = 0; i < subscriptions.size(); i++) {
                 Subscription subscription = subscriptions.valueAt(i);
@@ -199,7 +199,7 @@ import static com.parse.Parse.checkInit;
         }
     }
 
-    private void handleSubscribedEvent(JSONObject jsonObject) throws JSONException {
+    private <T extends ParseObject> void handleSubscribedEvent(JSONObject jsonObject) throws JSONException {
         final int requestId = jsonObject.getInt("requestId");
         final Subscription<T> subscription = subscriptionForRequestId(requestId);
         if (subscription != null) {
@@ -207,7 +207,7 @@ import static com.parse.Parse.checkInit;
         }
     }
 
-    private void handleUnsubscribedEvent(JSONObject jsonObject) throws JSONException {
+    private <T extends ParseObject> void handleUnsubscribedEvent(JSONObject jsonObject) throws JSONException {
         final int requestId = jsonObject.getInt("requestId");
         final Subscription<T> subscription = subscriptionForRequestId(requestId);
         if (subscription != null) {
@@ -216,7 +216,7 @@ import static com.parse.Parse.checkInit;
         }
     }
 
-    private void handleObjectEvent(Subscription.Event event, JSONObject jsonObject) throws JSONException {
+    private <T extends ParseObject> void handleObjectEvent(Subscription.Event event, JSONObject jsonObject) throws JSONException {
         final int requestId = jsonObject.getInt("requestId");
         final Subscription<T> subscription = subscriptionForRequestId(requestId);
         if (subscription != null) {
@@ -225,7 +225,7 @@ import static com.parse.Parse.checkInit;
         }
     }
 
-    private void handleErrorEvent(JSONObject jsonObject) throws JSONException {
+    private <T extends ParseObject> void handleErrorEvent(JSONObject jsonObject) throws JSONException {
         int requestId = jsonObject.getInt("requestId");
         int code = jsonObject.getInt("code");
         String error = jsonObject.getString("error");
@@ -236,11 +236,12 @@ import static com.parse.Parse.checkInit;
         }
     }
 
-    private Subscription<T> subscriptionForRequestId(int requestId) {
-        return subscriptions.get(requestId);
+    private <T extends ParseObject> Subscription<T> subscriptionForRequestId(int requestId) {
+        //noinspection unchecked
+        return (Subscription<T>) subscriptions.get(requestId);
     }
 
-    private void sendSubscription(final Subscription<T> subscription) {
+    private <T extends ParseObject> void sendSubscription(final Subscription<T> subscription) {
         ParseUser.getCurrentSessionTokenAsync().onSuccess(new Continuation<String, Void>() {
             @Override
             public Void then(Task<String> task) throws Exception {
