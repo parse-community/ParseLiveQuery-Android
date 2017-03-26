@@ -7,6 +7,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
 
@@ -23,13 +25,36 @@ import static com.parse.Parse.checkInit;
     private final String applicationId;
     private final String clientKey;
     private final SparseArray<Subscription<? extends ParseObject>> subscriptions = new SparseArray<>();
-    private final URI uri;
+    private URI uri;
     private final WebSocketClientFactory webSocketClientFactory;
     private final WebSocketClient.WebSocketClientCallback webSocketClientCallback;
 
     private WebSocketClient webSocketClient;
     private int requestIdCount = 1;
     private boolean userInitiatedDisconnect = false;
+
+    /* package */ ParseLiveQueryClientImpl() {
+        this(null);
+        URL serverUrl = ParseRESTCommand.server;
+        if (serverUrl == null) {
+            throw new RuntimeException("serverUrl is null. "
+                    + "You must call Parse.initialize(Context)"
+                    + " before using the Parse LiveQuery library.");
+        } else {
+            String url = serverUrl.toString();
+            if (serverUrl.getProtocol().equals("https")) {
+                url = url.replaceFirst("https", "wss");
+            } else {
+                url = url.replaceFirst("http", "ws");
+            }
+            try {
+                this.uri = new URI(url);
+            } catch (URISyntaxException e) {
+                e.printStackTrace();
+                throw new RuntimeException(e.getMessage());
+            }
+        }
+    }
 
     /* package */ ParseLiveQueryClientImpl(URI uri) {
         this(uri, new TubeSockWebSocketClient.TubeWebSocketClientFactory(), Task.BACKGROUND_EXECUTOR);
