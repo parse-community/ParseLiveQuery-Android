@@ -9,6 +9,8 @@ import org.json.JSONObject;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
 
@@ -29,6 +31,8 @@ import static com.parse.Parse.checkInit;
     private final URI uri;
     private final WebSocketClientFactory webSocketClientFactory;
     private final WebSocketClient.WebSocketClientCallback webSocketClientCallback;
+
+    private final List<ParseLiveQueryClientCallbacks> mCallbacks = new ArrayList<>();
 
     private WebSocketClient webSocketClient;
     private int requestIdCount = 1;
@@ -139,6 +143,16 @@ import static com.parse.Parse.checkInit;
         }
     }
 
+    @Override
+    public void registerListener(ParseLiveQueryClientCallbacks listener) {
+        mCallbacks.add(listener);
+    }
+
+    @Override
+    public void unregisterListener(ParseLiveQueryClientCallbacks listener) {
+        mCallbacks.remove(listener);
+    }
+
     // Private methods
 
     private synchronized int requestIdGenerator() {
@@ -189,6 +203,7 @@ import static com.parse.Parse.checkInit;
 
             switch (rawOperation) {
                 case "connected":
+                    dispatchConnected();
                     Log.v(LOG_TAG, "Connected, sending pending subscription");
                     for (int i = 0; i < subscriptions.size(); i++) {
                         sendSubscription(subscriptions.valueAt(i));
@@ -231,6 +246,31 @@ import static com.parse.Parse.checkInit;
         }
     }
 
+    private void dispatchConnected() {
+        for (ParseLiveQueryClientCallbacks callback : mCallbacks) {
+            callback.onLiveQueryClientConnected(this);
+        }
+    }
+
+    private void dispatchDisconnected() {
+        for (ParseLiveQueryClientCallbacks callback : mCallbacks) {
+            callback.onLiveQueryClientDisconnected(this);
+        }
+    }
+
+
+    private void dispatchServerError(LiveQueryException exc) {
+        for (ParseLiveQueryClientCallbacks callback : mCallbacks) {
+            callback.onLiveQueryError(this, exc);
+        }
+    }
+
+    private void dispatchSocketError(Throwable reason) {
+        for (ParseLiveQueryClientCallbacks callback : mCallbacks) {
+            callback.onSocketError(this, reason);
+        }
+    }
+
     private <T extends ParseObject> void handleSubscribedEvent(JSONObject jsonObject) throws JSONException {
         final int requestId = jsonObject.getInt("requestId");
         final Subscription<T> subscription = subscriptionForRequestId(requestId);
@@ -263,9 +303,13 @@ import static com.parse.Parse.checkInit;
         String error = jsonObject.getString("error");
         Boolean reconnect = jsonObject.getBoolean("reconnect");
         final Subscription<T> subscription = subscriptionForRequestId(requestId);
+        LiveQueryException exc = new LiveQueryException.ServerReportedException(code, error, reconnect);
+
         if (subscription != null) {
-            subscription.didEncounter(new LiveQueryException.ServerReportedException(code, error, reconnect), subscription.getQuery());
+            subscription.didEncounter(exc, subscription.getQuery());
         }
+
+        dispatchServerError(exc);
     }
 
     private <T extends ParseObject> Subscription<T> subscriptionForRequestId(int requestId) {
@@ -341,11 +385,13 @@ import static com.parse.Parse.checkInit;
             @Override
             public void onClose() {
                 Log.v(LOG_TAG, "Socket onClose");
+                dispatchDisconnected();
             }
 
             @Override
             public void onError(Throwable exception) {
                 Log.e(LOG_TAG, "Socket onError", exception);
+                dispatchSocketError(exception);
             }
 
             @Override

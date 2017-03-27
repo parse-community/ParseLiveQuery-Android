@@ -7,12 +7,13 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
+import org.robolectric.util.Transcript;
 
+import java.io.IOException;
 import java.net.URI;
 import java.util.LinkedList;
 import java.util.Queue;
@@ -398,6 +399,46 @@ public class TestParseLiveQueryClient {
         verify(webSocketClient, times(1)).close();
     }
 
+    @Test
+    public void testCallbackNotifiedOnDisconnect() throws Exception {
+        LoggingCallbacks callbacks = new LoggingCallbacks();
+        parseLiveQueryClient.registerListener(callbacks);
+        callbacks.transcript.assertNoEventsSoFar();
+
+        webSocketClientCallback.onClose();
+        callbacks.transcript.assertEventsSoFar("onLiveQueryClientDisconnected");
+    }
+
+    @Test
+    public void testCallbackNotifiedOnConnect() throws Exception {
+        LoggingCallbacks callbacks = new LoggingCallbacks();
+        parseLiveQueryClient.registerListener(callbacks);
+        callbacks.transcript.assertNoEventsSoFar();
+
+        reconnect();
+        callbacks.transcript.assertEventsSoFar("onLiveQueryClientConnected");
+    }
+
+    @Test
+    public void testCallbackNotifiedOnSocketError() throws Exception {
+        LoggingCallbacks callbacks = new LoggingCallbacks();
+        parseLiveQueryClient.registerListener(callbacks);
+        callbacks.transcript.assertNoEventsSoFar();
+
+        webSocketClientCallback.onError(new IOException("bad things happened"));
+        callbacks.transcript.assertEventsSoFar("onSocketError: java.io.IOException: bad things happened");
+    }
+
+    @Test
+    public void testCallbackNotifiedOnServerError() throws Exception {
+        LoggingCallbacks callbacks = new LoggingCallbacks();
+        parseLiveQueryClient.registerListener(callbacks);
+        callbacks.transcript.assertNoEventsSoFar();
+
+        webSocketClientCallback.onMessage(createErrorMessage(1).toString());
+        callbacks.transcript.assertEventsSoFar("onLiveQueryError: com.parse.LiveQueryException$ServerReportedException: Server reported error; code: 1, error: testError, reconnect: true");
+    }
+
     private SubscriptionHandling<ParseObject> createSubscription(ParseQuery<ParseObject> parseQuery,
             SubscriptionHandling.HandleSubscribeCallback<ParseObject> subscribeMockCallback) throws Exception {
         SubscriptionHandling<ParseObject> subscriptionHandling = parseLiveQueryClient.subscribe(parseQuery).handleSubscribe(subscribeMockCallback);
@@ -496,6 +537,30 @@ public class TestParseLiveQueryClient {
         jsonObject.put("requestId", requestId);
         jsonObject.put("object", PointerEncoder.get().encodeRelatedObject(parseObject));
         return jsonObject;
+    }
+
+    private static class LoggingCallbacks implements ParseLiveQueryClientCallbacks {
+        final Transcript transcript = new Transcript();
+
+        @Override
+        public void onLiveQueryClientConnected(ParseLiveQueryClient client) {
+            transcript.add("onLiveQueryClientConnected");
+        }
+
+        @Override
+        public void onLiveQueryClientDisconnected(ParseLiveQueryClient client) {
+            transcript.add("onLiveQueryClientDisconnected");
+        }
+
+        @Override
+        public void onLiveQueryError(ParseLiveQueryClient client, LiveQueryException reason) {
+            transcript.add("onLiveQueryError: " + reason);
+        }
+
+        @Override
+        public void onSocketError(ParseLiveQueryClient client, Throwable reason) {
+            transcript.add("onSocketError: " + reason);
+        }
     }
 
     private static class PauseableExecutor implements Executor {
