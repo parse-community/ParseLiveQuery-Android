@@ -21,7 +21,7 @@ Download [the latest JAR][latest] or define in Gradle:
 
 ```groovy
 dependencies {
-  compile 'com.parse:parse-livequery-android:1.0.0'
+  compile 'com.parse:parse-livequery-android:1.0.1'
 }
 ```
 
