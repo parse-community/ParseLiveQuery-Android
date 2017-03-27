@@ -25,7 +25,7 @@ import static com.parse.Parse.checkInit;
     private final String applicationId;
     private final String clientKey;
     private final SparseArray<Subscription<? extends ParseObject>> subscriptions = new SparseArray<>();
-    private URI uri;
+    private final URI uri;
     private final WebSocketClientFactory webSocketClientFactory;
     private final WebSocketClient.WebSocketClientCallback webSocketClientCallback;
 
@@ -34,26 +34,7 @@ import static com.parse.Parse.checkInit;
     private boolean userInitiatedDisconnect = false;
 
     /* package */ ParseLiveQueryClientImpl() {
-        this(null);
-        URL serverUrl = ParseRESTCommand.server;
-        if (serverUrl == null) {
-            throw new RuntimeException("serverUrl is null. "
-                    + "You must call Parse.initialize(Context)"
-                    + " before using the Parse LiveQuery library.");
-        } else {
-            String url = serverUrl.toString();
-            if (serverUrl.getProtocol().equals("https")) {
-                url = url.replaceFirst("https", "wss");
-            } else {
-                url = url.replaceFirst("http", "ws");
-            }
-            try {
-                this.uri = new URI(url);
-            } catch (URISyntaxException e) {
-                e.printStackTrace();
-                throw new RuntimeException(e.getMessage());
-            }
-        }
+        this(getDefaultUri());
     }
 
     /* package */ ParseLiveQueryClientImpl(URI uri) {
@@ -68,6 +49,25 @@ import static com.parse.Parse.checkInit;
         this.webSocketClientFactory = webSocketClientFactory;
         this.taskExecutor = taskExecutor;
         this.webSocketClientCallback = getWebSocketClientCallback();
+    }
+
+    private static URI getDefaultUri() {
+        URL serverUrl = ParseRESTCommand.server;
+        if (serverUrl != null) {
+            String url = serverUrl.toString();
+            if (serverUrl.getProtocol().equals("https")) {
+                url = url.replaceFirst("https", "wss");
+            } else {
+                url = url.replaceFirst("http", "ws");
+            }
+            try {
+                return new URI(url);
+            } catch (URISyntaxException e) {
+                e.printStackTrace();
+                throw new RuntimeException(e.getMessage());
+            }
+        }
+        return null;
     }
 
     @Override
