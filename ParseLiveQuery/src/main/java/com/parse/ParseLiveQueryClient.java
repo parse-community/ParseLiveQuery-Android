@@ -14,6 +14,10 @@ public interface ParseLiveQueryClient {
 
     void disconnect();
 
+    void registerListener(ParseLiveQueryClientCallbacks listener);
+
+    void unregisterListener(ParseLiveQueryClientCallbacks listener);
+
     class Factory {
 
         public static ParseLiveQueryClient getClient() {
@@ -38,5 +42,4 @@ public interface ParseLiveQueryClient {
         }
 
     }
-
 }
