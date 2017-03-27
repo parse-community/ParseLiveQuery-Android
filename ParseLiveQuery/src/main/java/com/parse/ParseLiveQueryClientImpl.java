@@ -7,6 +7,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
 
@@ -31,6 +33,10 @@ import static com.parse.Parse.checkInit;
     private int requestIdCount = 1;
     private boolean userInitiatedDisconnect = false;
 
+    /* package */ ParseLiveQueryClientImpl() {
+        this(getDefaultUri());
+    }
+
     /* package */ ParseLiveQueryClientImpl(URI uri) {
         this(uri, new TubeSockWebSocketClient.TubeWebSocketClientFactory(), Task.BACKGROUND_EXECUTOR);
     }
@@ -43,6 +49,23 @@ import static com.parse.Parse.checkInit;
         this.webSocketClientFactory = webSocketClientFactory;
         this.taskExecutor = taskExecutor;
         this.webSocketClientCallback = getWebSocketClientCallback();
+    }
+
+    private static URI getDefaultUri() {
+        URL serverUrl = ParseRESTCommand.server;
+        if (serverUrl == null) return null;
+        String url = serverUrl.toString();
+        if (serverUrl.getProtocol().equals("https")) {
+            url = url.replaceFirst("https", "wss");
+        } else {
+            url = url.replaceFirst("http", "ws");
+        }
+        try {
+            return new URI(url);
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+            throw new RuntimeException(e.getMessage());
+        }
     }
 
     @Override

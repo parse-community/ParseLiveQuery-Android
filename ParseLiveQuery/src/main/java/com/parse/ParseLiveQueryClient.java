@@ -17,6 +17,10 @@ public interface ParseLiveQueryClient {
 
     class Factory {
 
+        public static ParseLiveQueryClient getClient() {
+            return new ParseLiveQueryClientImpl();
+        }
+
         public static ParseLiveQueryClient getClient(URI uri) {
             return new ParseLiveQueryClientImpl(uri);
         }
