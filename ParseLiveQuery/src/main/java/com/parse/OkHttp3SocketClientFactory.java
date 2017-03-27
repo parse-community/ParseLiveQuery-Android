@@ -12,8 +12,6 @@ import okhttp3.WebSocket;
 import okhttp3.WebSocketListener;
 import okio.ByteString;
 
-/* package */
-
 /* package */ public class OkHttp3SocketClientFactory implements WebSocketClientFactory {
 
     OkHttpClient mClient;
@@ -120,8 +118,6 @@ import okio.ByteString;
             this.state = newState;
             this.webSocketClientCallback.stateChanged();
         }
-
-
     }
 
 }

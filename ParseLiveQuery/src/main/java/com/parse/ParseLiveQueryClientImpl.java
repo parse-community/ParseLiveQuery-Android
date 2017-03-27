@@ -42,8 +42,8 @@ import static com.parse.Parse.checkInit;
         this(uri, new OkHttp3SocketClientFactory(new OkHttpClient()), Task.BACKGROUND_EXECUTOR);
     }
 
-    /* package */ ParseLiveQueryClientImpl(URI uri, OkHttpClient okHttpClient) {
-        this(uri, new OkHttp3SocketClientFactory(okHttpClient), Task.BACKGROUND_EXECUTOR);
+    /* package */ ParseLiveQueryClientImpl(URI uri, WebSocketClientFactory webSocketClientFactory) {
+        this(uri, webSocketClientFactory, Task.BACKGROUND_EXECUTOR);
     }
 
     /* package */ ParseLiveQueryClientImpl(URI uri, WebSocketClientFactory webSocketClientFactory, Executor taskExecutor) {

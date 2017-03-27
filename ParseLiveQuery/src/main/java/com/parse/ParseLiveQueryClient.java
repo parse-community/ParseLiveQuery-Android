@@ -3,8 +3,6 @@ package com.parse;
 import java.net.URI;
 import java.util.concurrent.Executor;
 
-import okhttp3.OkHttpClient;
-
 public interface ParseLiveQueryClient {
     <T extends ParseObject> SubscriptionHandling<T> subscribe(ParseQuery<T> query);
 
@@ -26,8 +24,8 @@ public interface ParseLiveQueryClient {
             return new ParseLiveQueryClientImpl(uri);
         }
 
-        public static <T extends ParseObject> ParseLiveQueryClient getClient(URI uri, OkHttpClient okHttpClient) {
-            return new ParseLiveQueryClientImpl(uri, okHttpClient);
+        public static <T extends ParseObject> ParseLiveQueryClient getClient(URI uri, WebSocketClientFactory webSocketClientFactory) {
+            return new ParseLiveQueryClientImpl(uri, webSocketClientFactory);
         }
 
         /* package */
