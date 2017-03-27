@@ -40,7 +40,7 @@ android {
 }
 
 dependencies {
-    compile 'com.parse:parse-android:1.14.0'
+    compile 'com.parse:parse-android:1.14.1'
     compile 'com.squareup.okhttp3:okhttp:3.6.0'
     compile 'com.parse.bolts:bolts-tasks:1.4.0'
 
