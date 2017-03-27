@@ -46,6 +46,10 @@ import static com.parse.Parse.checkInit;
         this(uri, webSocketClientFactory, Task.BACKGROUND_EXECUTOR);
     }
 
+    /* package */ ParseLiveQueryClientImpl(WebSocketClientFactory webSocketClientFactory) {
+        this(getDefaultUri(), webSocketClientFactory, Task.BACKGROUND_EXECUTOR);
+    }
+
     /* package */ ParseLiveQueryClientImpl(URI uri, WebSocketClientFactory webSocketClientFactory, Executor taskExecutor) {
         checkInit();
         this.uri = uri;

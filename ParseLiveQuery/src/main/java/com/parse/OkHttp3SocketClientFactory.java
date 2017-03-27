@@ -29,10 +29,6 @@ import okio.ByteString;
         return new OkHttp3WebSocketClient(mClient, webSocketClientCallback, hostUrl);
     }
 
-    public WebSocketClient createInstance(OkHttpClient client, WebSocketClient.WebSocketClientCallback webSocketClientCallback, URI hostUrl) {
-        return new OkHttp3WebSocketClient(mClient, webSocketClientCallback, hostUrl);
-    }
-
     class OkHttp3WebSocketClient implements WebSocketClient {
 
         private static final String LOG_TAG = "OkHttpWebSocketClient";

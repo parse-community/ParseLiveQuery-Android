@@ -20,11 +20,15 @@ public interface ParseLiveQueryClient {
             return new ParseLiveQueryClientImpl();
         }
 
+        public static ParseLiveQueryClient getClient(WebSocketClientFactory webSocketClientFactory) {
+            return new ParseLiveQueryClientImpl(webSocketClientFactory);
+        }
+
         public static ParseLiveQueryClient getClient(URI uri) {
             return new ParseLiveQueryClientImpl(uri);
         }
 
-        public static <T extends ParseObject> ParseLiveQueryClient getClient(URI uri, WebSocketClientFactory webSocketClientFactory) {
+        public static ParseLiveQueryClient getClient(URI uri, WebSocketClientFactory webSocketClientFactory) {
             return new ParseLiveQueryClientImpl(uri, webSocketClientFactory);
         }
 
