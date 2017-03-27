@@ -8,11 +8,11 @@ version = '1.0.1-SNAPSHOT'
 
 buildscript {
     repositories {
-        mavenCentral()
+        jcenter()
     }
 
     dependencies {
-        classpath 'org.kt3k.gradle.plugin:coveralls-gradle-plugin:2.0.1x'
+        classpath 'org.kt3k.gradle.plugin:coveralls-gradle-plugin:2.8.1'
     }
 }
 
@@ -45,8 +45,9 @@ dependencies {
     compile 'com.squareup.okhttp3:okhttp:3.6.0'
     compile 'com.parse.bolts:bolts-tasks:1.4.0'
 
-    testCompile 'org.robolectric:robolectric:3.0'
-    testCompile 'org.skyscreamer:jsonassert:1.2.3'
+    testCompile 'org.robolectric:robolectric:3.3.1'
+    testCompile 'org.skyscreamer:jsonassert:1.5.0'
+    testCompile 'junit:junit:4.12'
     testCompile 'org.mockito:mockito-core:1.10.19'
 }
 
