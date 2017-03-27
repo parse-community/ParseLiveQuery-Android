@@ -53,21 +53,19 @@ import static com.parse.Parse.checkInit;
 
     private static URI getDefaultUri() {
         URL serverUrl = ParseRESTCommand.server;
-        if (serverUrl != null) {
-            String url = serverUrl.toString();
-            if (serverUrl.getProtocol().equals("https")) {
-                url = url.replaceFirst("https", "wss");
-            } else {
-                url = url.replaceFirst("http", "ws");
-            }
-            try {
-                return new URI(url);
-            } catch (URISyntaxException e) {
-                e.printStackTrace();
-                throw new RuntimeException(e.getMessage());
-            }
+        if (serverUrl == null) return null;
+        String url = serverUrl.toString();
+        if (serverUrl.getProtocol().equals("https")) {
+            url = url.replaceFirst("https", "wss");
+        } else {
+            url = url.replaceFirst("http", "ws");
         }
-        return null;
+        try {
+            return new URI(url);
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+            throw new RuntimeException(e.getMessage());
+        }
     }
 
     @Override
