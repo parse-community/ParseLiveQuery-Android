@@ -32,10 +32,20 @@ Snapshots of the development version are available in [Sonatype's `snapshots` re
 
 The LiveQuery client interface is based around the concept of `Subscriptions`. You can register any `ParseQuery` for live updates from the associated live query server, by simply calling `subscribe()` on a the client:
 ```java
-ParseLiveQueryClient parseLiveQueryClient = ParseLiveQueryClient.Factory.getClient(URI);
+// Parse.initialize should be called first
+
+ParseLiveQueryClient parseLiveQueryClient = ParseLiveQueryClient.Factory.getClient();
+```
+
+### Creating Live Queries
+
+Live querying depends on creating a subscription to a `ParseQuery`:
+
+```java
+ParseQuery<Message> parseQuery = ParseQuery.getQuery(Message.class);
+
 SubscriptionHandling<ParseObject> subscriptionHandling = parseLiveQueryClient.subscribe(parseQuery)
 ```
-Note: The exected protocol for URI is `ws` instead of `http`, like in this example: `URI("ws://192.168.0.1:1337/1")`.
 
 Once you've subscribed to a query, you can `handle` events on them, like so:
 ```java
@@ -61,7 +71,19 @@ Handling errors is and other events is similar, take a look at the `Subscription
 
 ## Advanced Usage
 
-You are not limited to a single Live Query Client - you can create your own instances of `Client` to manually control things like reconnecting, server URLs, and more.
+If you wish to pass in your own OkHttpClient instance for troubleshooting or custom configs, you can instantiate the client as follows:
+
+```java
+ParseLiveQueryClient parseLiveQueryClient = ParseLiveQueryClient.Factory.getClient(new OkHttp3SocketClientFactory(new OkHttpClient()));
+```
+
+The URL is determined by the Parse initialization, but you can override by specifying a `URI` object:
+
+```java
+ParseLiveQueryClient parseLiveQueryClient = ParseLiveQueryClient.Factory.getClient(new URI("wss://myparseinstance.com"));
+```
+
+Note: The expected protocol for URI is `ws` instead of `http`, like in this example: `URI("ws://192.168.0.1:1337/1")`.
 
 ## Build commands
 Everything can done through the supplied gradle wrapper:
