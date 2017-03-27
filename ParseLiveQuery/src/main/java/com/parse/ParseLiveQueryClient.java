@@ -4,7 +4,6 @@ import java.net.URI;
 import java.util.concurrent.Executor;
 
 public interface ParseLiveQueryClient {
-
     <T extends ParseObject> SubscriptionHandling<T> subscribe(ParseQuery<T> query);
 
     <T extends ParseObject> void unsubscribe(final ParseQuery<T> query);
@@ -21,8 +20,16 @@ public interface ParseLiveQueryClient {
             return new ParseLiveQueryClientImpl();
         }
 
+        public static ParseLiveQueryClient getClient(WebSocketClientFactory webSocketClientFactory) {
+            return new ParseLiveQueryClientImpl(webSocketClientFactory);
+        }
+
         public static ParseLiveQueryClient getClient(URI uri) {
             return new ParseLiveQueryClientImpl(uri);
+        }
+
+        public static ParseLiveQueryClient getClient(URI uri, WebSocketClientFactory webSocketClientFactory) {
+            return new ParseLiveQueryClientImpl(uri, webSocketClientFactory);
         }
 
         /* package */

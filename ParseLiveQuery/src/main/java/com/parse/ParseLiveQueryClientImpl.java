@@ -14,6 +14,7 @@ import java.util.concurrent.Executor;
 
 import bolts.Continuation;
 import bolts.Task;
+import okhttp3.OkHttpClient;
 
 import static com.parse.Parse.checkInit;
 
@@ -38,7 +39,15 @@ import static com.parse.Parse.checkInit;
     }
 
     /* package */ ParseLiveQueryClientImpl(URI uri) {
-        this(uri, new TubeSockWebSocketClient.TubeWebSocketClientFactory(), Task.BACKGROUND_EXECUTOR);
+        this(uri, new OkHttp3SocketClientFactory(new OkHttpClient()), Task.BACKGROUND_EXECUTOR);
+    }
+
+    /* package */ ParseLiveQueryClientImpl(URI uri, WebSocketClientFactory webSocketClientFactory) {
+        this(uri, webSocketClientFactory, Task.BACKGROUND_EXECUTOR);
+    }
+
+    /* package */ ParseLiveQueryClientImpl(WebSocketClientFactory webSocketClientFactory) {
+        this(getDefaultUri(), webSocketClientFactory, Task.BACKGROUND_EXECUTOR);
     }
 
     /* package */ ParseLiveQueryClientImpl(URI uri, WebSocketClientFactory webSocketClientFactory, Executor taskExecutor) {
