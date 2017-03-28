@@ -138,8 +138,8 @@ import static com.parse.Parse.checkInit;
     @Override
     public void disconnect() {
         if (webSocketClient != null) {
-            disconnectAsync();
             userInitiatedDisconnect = true;
+            disconnectAsync();
         }
     }
 
@@ -254,7 +254,7 @@ import static com.parse.Parse.checkInit;
 
     private void dispatchDisconnected() {
         for (ParseLiveQueryClientCallbacks callback : mCallbacks) {
-            callback.onLiveQueryClientDisconnected(this);
+            callback.onLiveQueryClientDisconnected(this, userInitiatedDisconnect);
         }
     }
 

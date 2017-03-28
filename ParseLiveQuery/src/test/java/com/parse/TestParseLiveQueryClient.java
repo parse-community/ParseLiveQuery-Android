@@ -405,8 +405,25 @@ public class TestParseLiveQueryClient {
         parseLiveQueryClient.registerListener(callbacks);
         callbacks.transcript.assertNoEventsSoFar();
 
+        // Unexpected close from the server:
         webSocketClientCallback.onClose();
-        callbacks.transcript.assertEventsSoFar("onLiveQueryClientDisconnected");
+        callbacks.transcript.assertEventsSoFar("onLiveQueryClientDisconnected: false");
+    }
+
+
+    @Test
+    public void testCallbackNotifiedOnDisconnect_expected() throws Exception {
+        LoggingCallbacks callbacks = new LoggingCallbacks();
+        parseLiveQueryClient.registerListener(callbacks);
+        callbacks.transcript.assertNoEventsSoFar();
+
+        parseLiveQueryClient.disconnect();
+        verify(webSocketClient, times(1)).close();
+
+        callbacks.transcript.assertNoEventsSoFar();
+        // the client is a mock, so it won't actually invoke the callback automatically
+        webSocketClientCallback.onClose();
+        callbacks.transcript.assertEventsSoFar("onLiveQueryClientDisconnected: true");
     }
 
     @Test
@@ -548,8 +565,8 @@ public class TestParseLiveQueryClient {
         }
 
         @Override
-        public void onLiveQueryClientDisconnected(ParseLiveQueryClient client) {
-            transcript.add("onLiveQueryClientDisconnected");
+        public void onLiveQueryClientDisconnected(ParseLiveQueryClient client, boolean userInitiated) {
+            transcript.add("onLiveQueryClientDisconnected: " + userInitiated);
         }
 
         @Override
