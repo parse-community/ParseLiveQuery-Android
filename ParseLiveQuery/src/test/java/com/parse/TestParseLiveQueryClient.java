@@ -443,7 +443,8 @@ public class TestParseLiveQueryClient {
         callbacks.transcript.assertNoEventsSoFar();
 
         webSocketClientCallback.onError(new IOException("bad things happened"));
-        callbacks.transcript.assertEventsSoFar("onSocketError: java.io.IOException: bad things happened");
+        callbacks.transcript.assertEventsSoFar("onSocketError: java.io.IOException: bad things happened",
+                "onLiveQueryClientDisconnected: false");
     }
 
     @Test

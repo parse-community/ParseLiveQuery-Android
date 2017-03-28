@@ -266,9 +266,13 @@ import static com.parse.Parse.checkInit;
     }
 
     private void dispatchSocketError(Throwable reason) {
+        userInitiatedDisconnect = false;
+
         for (ParseLiveQueryClientCallbacks callback : mCallbacks) {
             callback.onSocketError(this, reason);
         }
+
+        dispatchDisconnected();
     }
 
     private <T extends ParseObject> void handleSubscribedEvent(JSONObject jsonObject) throws JSONException {
