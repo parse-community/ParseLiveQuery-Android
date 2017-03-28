@@ -400,7 +400,7 @@ public class TestParseLiveQueryClient {
     }
 
     @Test
-    public void testCallbackNotifiedOnDisconnect() throws Exception {
+    public void testCallbackNotifiedOnUnexpectedDisconnect() throws Exception {
         LoggingCallbacks callbacks = new LoggingCallbacks();
         parseLiveQueryClient.registerListener(callbacks);
         callbacks.transcript.assertNoEventsSoFar();
@@ -410,9 +410,8 @@ public class TestParseLiveQueryClient {
         callbacks.transcript.assertEventsSoFar("onLiveQueryClientDisconnected: false");
     }
 
-
     @Test
-    public void testCallbackNotifiedOnDisconnect_expected() throws Exception {
+    public void testCallbackNotifiedOnExpectedDisconnect() throws Exception {
         LoggingCallbacks callbacks = new LoggingCallbacks();
         parseLiveQueryClient.registerListener(callbacks);
         callbacks.transcript.assertNoEventsSoFar();
