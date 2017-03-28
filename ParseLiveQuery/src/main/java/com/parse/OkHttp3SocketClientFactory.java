@@ -29,7 +29,7 @@ import okio.ByteString;
         return new OkHttp3WebSocketClient(mClient, webSocketClientCallback, hostUrl);
     }
 
-    class OkHttp3WebSocketClient implements WebSocketClient {
+    static class OkHttp3WebSocketClient implements WebSocketClient {
 
         private static final String LOG_TAG = "OkHttpWebSocketClient";
 
@@ -38,7 +38,7 @@ import okio.ByteString;
         private State state = State.NONE;
         private final OkHttpClient client;
         private final String url;
-        private final int STATUS_CODE = 200;
+        private final int STATUS_CODE = 1000;
         private final String CLOSING_MSG = "User invoked close";
 
         private final WebSocketListener handler = new WebSocketListener() {
