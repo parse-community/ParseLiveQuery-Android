@@ -4,7 +4,7 @@ apply plugin: 'com.android.library'
 apply plugin: 'com.github.kt3k.coveralls'
 
 group = 'com.parse'
-version = '1.0.2-SNAPSHOT'
+version = '1.0.2'
 
 buildscript {
     repositories {
@@ -174,7 +174,7 @@ jacoco {
     toolVersion "0.7.1.201405082137"
 }
 
-task jacocoTestReport(type:JacocoReport, dependsOn: "testDebugUnitTest") {
+task jacocoTestReport(type: JacocoReport, dependsOn: "testDebugUnitTest") {
     group = "Reporting"
     description = "Generate Jacoco coverage reports"
 
