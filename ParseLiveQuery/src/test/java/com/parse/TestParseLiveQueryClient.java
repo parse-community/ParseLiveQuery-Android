@@ -390,16 +390,6 @@ public class TestParseLiveQueryClient {
     }
 
     @Test
-    public void testDisconnectOnBackgroundThread() throws Exception {
-        executor.pause();
-
-        parseLiveQueryClient.disconnect();
-        verify(webSocketClient, never()).close();
-        assertTrue(executor.advanceOne());
-        verify(webSocketClient, times(1)).close();
-    }
-
-    @Test
     public void testCallbackNotifiedOnUnexpectedDisconnect() throws Exception {
         LoggingCallbacks callbacks = new LoggingCallbacks();
         parseLiveQueryClient.registerListener(callbacks);

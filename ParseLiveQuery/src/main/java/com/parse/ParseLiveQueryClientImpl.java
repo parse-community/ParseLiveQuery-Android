@@ -124,14 +124,12 @@ import static com.parse.Parse.checkInit;
 
     @Override
     public void reconnect() {
-        disconnectAsync().continueWith(new Continuation<Void, Void>() {
-            @Override
-            public Void then(Task<Void> task) throws Exception {
-                webSocketClient = webSocketClientFactory.createInstance(webSocketClientCallback, uri);
-                webSocketClient.open();
-                return null;
-            }
-        });
+        if (webSocketClient != null) {
+            webSocketClient.close();
+        }
+
+        webSocketClient = webSocketClientFactory.createInstance(webSocketClientCallback, uri);
+        webSocketClient.open();
         userInitiatedDisconnect = false;
     }
 
@@ -139,7 +137,8 @@ import static com.parse.Parse.checkInit;
     public void disconnect() {
         if (webSocketClient != null) {
             userInitiatedDisconnect = true;
-            disconnectAsync();
+            webSocketClient.close();
+            webSocketClient = null;
         }
     }
 
@@ -177,20 +176,6 @@ import static com.parse.Parse.checkInit;
                     Log.d(LOG_TAG, "Sending over websocket: " + jsonString);
                 }
                 webSocketClient.send(jsonString);
-                return null;
-            }
-        }, taskExecutor);
-    }
-
-    private Task<Void> disconnectAsync() {
-        return Task.call(new Callable<Void>() {
-            @Override
-            public Void call() throws Exception {
-                if (webSocketClient != null) {
-                    webSocketClient.close();
-                    webSocketClient = null;
-                }
-
                 return null;
             }
         }, taskExecutor);
