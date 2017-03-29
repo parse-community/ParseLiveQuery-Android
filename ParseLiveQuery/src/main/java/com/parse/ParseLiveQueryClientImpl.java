@@ -10,6 +10,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
@@ -86,16 +87,37 @@ import static com.parse.Parse.checkInit;
         int requestId = requestIdGenerator();
         Subscription<T> subscription = new Subscription<>(requestId, query);
         subscriptions.append(requestId, subscription);
-        if (webSocketClient == null || (webSocketClient.getState() != WebSocketClient.State.CONNECTING && webSocketClient.getState() != WebSocketClient.State.CONNECTED)) {
-            if (!userInitiatedDisconnect) {
-                reconnect();
-            } else {
-                Log.w(LOG_TAG, "Warning: The client was explicitly disconnected! You must explicitly call .reconnect() in order to process your subscriptions.");
-            }
-        } else if (webSocketClient.getState() == WebSocketClient.State.CONNECTED) {
+
+        if (inAnyState(WebSocketClient.State.CONNECTED)) {
             sendSubscription(subscription);
+        } else if (userInitiatedDisconnect) {
+            Log.w(LOG_TAG, "Warning: The client was explicitly disconnected! You must explicitly call .reconnect() in order to process your subscriptions.");
+        } else {
+            connectIfNeeded();
         }
+
         return subscription;
+    }
+
+    public void connectIfNeeded() {
+        switch (getWebSocketState()) {
+            case CONNECTED:
+                // nothing to do
+                break;
+            case CONNECTING:
+                // just wait for it to finish connecting
+                break;
+
+            case NONE:
+            case DISCONNECTING:
+            case DISCONNECTED:
+                reconnect();
+                break;
+
+            default:
+
+                break;
+        }
     }
 
     @Override
@@ -156,6 +178,15 @@ import static com.parse.Parse.checkInit;
 
     private synchronized int requestIdGenerator() {
         return requestIdCount++;
+    }
+
+    private WebSocketClient.State getWebSocketState() {
+        WebSocketClient.State state = webSocketClient == null ? null : webSocketClient.getState();
+        return state == null ? WebSocketClient.State.NONE : state;
+    }
+
+    private boolean inAnyState(WebSocketClient.State... states) {
+        return Arrays.asList(states).contains(getWebSocketState());
     }
 
     private Task<Void> handleOperationAsync(final String message) {
