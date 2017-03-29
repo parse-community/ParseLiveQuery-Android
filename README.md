@@ -39,6 +39,22 @@ ParseLiveQueryClient parseLiveQueryClient = ParseLiveQueryClient.Factory.getClie
 
 ### Creating Live Queries
 
+If you wish to pass in your own OkHttpClient instance for troubleshooting or custom configs, you can instantiate the client as follows:
+
+```java
+ParseLiveQueryClient parseLiveQueryClient =
+ParseLiveQueryClient.Factory.getClient(new OkHttp3SocketClientFactory(new OkHttpClient()));
+```
+
+The URL is determined by the Parse initialization, but you can override by specifying a `URI` object:
+
+```java
+ParseLiveQueryClient parseLiveQueryClient =
+ParseLiveQueryClient.Factory.getClient(new URI("wss://myparseinstance.com"));
+```
+
+Note: The expected protocol for URI is `ws` instead of `http`, like in this example: `URI("ws://192.168.0.1:1337/1")`.
+
 Live querying depends on creating a subscription to a `ParseQuery`:
 
 ```java

@@ -1,1 +1,1 @@
-include ':ParseLiveQuery'
+include ':ParseLiveQuery', ':Example'
