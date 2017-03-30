@@ -15,9 +15,6 @@ import org.robolectric.util.Transcript;
 
 import java.io.IOException;
 import java.net.URI;
-import java.util.LinkedList;
-import java.util.Queue;
-import java.util.concurrent.Executor;
 
 import bolts.Task;
 
@@ -41,7 +38,6 @@ import static org.mockito.Mockito.when;
 @Config(constants = BuildConfig.class, sdk = 21)
 public class TestParseLiveQueryClient {
 
-    private PauseableExecutor executor;
     private WebSocketClient webSocketClient;
     private WebSocketClient.WebSocketClientCallback webSocketClientCallback;
     private ParseLiveQueryClient parseLiveQueryClient;
@@ -69,8 +65,6 @@ public class TestParseLiveQueryClient {
         });
         ParseCorePlugins.getInstance().registerCurrentUserController(currentUserController);
 
-        executor = new PauseableExecutor();
-
         parseLiveQueryClient = ParseLiveQueryClient.Factory.getClient(new URI(""), new WebSocketClientFactory() {
             @Override
             public WebSocketClient createInstance(WebSocketClient.WebSocketClientCallback webSocketClientCallback, URI hostUrl) {
@@ -78,7 +72,7 @@ public class TestParseLiveQueryClient {
                 webSocketClient = mock(WebSocketClient.class);
                 return webSocketClient;
             }
-        }, executor);
+        }, new ImmediateExecutor());
         reconnect();
     }
 
@@ -567,41 +561,6 @@ public class TestParseLiveQueryClient {
         @Override
         public void onSocketError(ParseLiveQueryClient client, Throwable reason) {
             transcript.add("onSocketError: " + reason);
-        }
-    }
-
-    private static class PauseableExecutor implements Executor {
-        private boolean isPaused = false;
-        private final Queue<Runnable> queue = new LinkedList<>();
-
-        void pause() {
-            isPaused = true;
-        }
-
-        void unpause() {
-            if (isPaused) {
-                isPaused = false;
-
-                //noinspection StatementWithEmptyBody
-                while (advanceOne()) {
-                    // keep going
-                }
-            }
-        }
-
-        boolean advanceOne() {
-            Runnable next = queue.poll();
-            if (next != null) next.run();
-            return next != null;
-        }
-
-        @Override
-        public void execute(Runnable runnable) {
-            if (isPaused) {
-                queue.add(runnable);
-            } else {
-                runnable.run();
-            }
         }
     }
 
