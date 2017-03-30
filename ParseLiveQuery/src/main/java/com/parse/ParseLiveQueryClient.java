@@ -10,6 +10,8 @@ public interface ParseLiveQueryClient {
 
     <T extends ParseObject> void unsubscribe(final ParseQuery<T> query, final SubscriptionHandling<T> subscriptionHandling);
 
+    void connectIfNeeded();
+
     void reconnect();
 
     void disconnect();

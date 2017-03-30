@@ -10,6 +10,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
@@ -86,16 +87,37 @@ import static com.parse.Parse.checkInit;
         int requestId = requestIdGenerator();
         Subscription<T> subscription = new Subscription<>(requestId, query);
         subscriptions.append(requestId, subscription);
-        if (webSocketClient == null || (webSocketClient.getState() != WebSocketClient.State.CONNECTING && webSocketClient.getState() != WebSocketClient.State.CONNECTED)) {
-            if (!userInitiatedDisconnect) {
-                reconnect();
-            } else {
-                Log.w(LOG_TAG, "Warning: The client was explicitly disconnected! You must explicitly call .reconnect() in order to process your subscriptions.");
-            }
-        } else if (webSocketClient.getState() == WebSocketClient.State.CONNECTED) {
+
+        if (inAnyState(WebSocketClient.State.CONNECTED)) {
             sendSubscription(subscription);
+        } else if (userInitiatedDisconnect) {
+            Log.w(LOG_TAG, "Warning: The client was explicitly disconnected! You must explicitly call .reconnect() in order to process your subscriptions.");
+        } else {
+            connectIfNeeded();
         }
+
         return subscription;
+    }
+
+    public void connectIfNeeded() {
+        switch (getWebSocketState()) {
+            case CONNECTED:
+                // nothing to do
+                break;
+            case CONNECTING:
+                // just wait for it to finish connecting
+                break;
+
+            case NONE:
+            case DISCONNECTING:
+            case DISCONNECTED:
+                reconnect();
+                break;
+
+            default:
+
+                break;
+        }
     }
 
     @Override
@@ -124,14 +146,12 @@ import static com.parse.Parse.checkInit;
 
     @Override
     public void reconnect() {
-        disconnectAsync().continueWith(new Continuation<Void, Void>() {
-            @Override
-            public Void then(Task<Void> task) throws Exception {
-                webSocketClient = webSocketClientFactory.createInstance(webSocketClientCallback, uri);
-                webSocketClient.open();
-                return null;
-            }
-        });
+        if (webSocketClient != null) {
+            webSocketClient.close();
+        }
+
+        webSocketClient = webSocketClientFactory.createInstance(webSocketClientCallback, uri);
+        webSocketClient.open();
         userInitiatedDisconnect = false;
     }
 
@@ -139,7 +159,8 @@ import static com.parse.Parse.checkInit;
     public void disconnect() {
         if (webSocketClient != null) {
             userInitiatedDisconnect = true;
-            disconnectAsync();
+            webSocketClient.close();
+            webSocketClient = null;
         }
     }
 
@@ -157,6 +178,15 @@ import static com.parse.Parse.checkInit;
 
     private synchronized int requestIdGenerator() {
         return requestIdCount++;
+    }
+
+    private WebSocketClient.State getWebSocketState() {
+        WebSocketClient.State state = webSocketClient == null ? null : webSocketClient.getState();
+        return state == null ? WebSocketClient.State.NONE : state;
+    }
+
+    private boolean inAnyState(WebSocketClient.State... states) {
+        return Arrays.asList(states).contains(getWebSocketState());
     }
 
     private Task<Void> handleOperationAsync(final String message) {
@@ -177,20 +207,6 @@ import static com.parse.Parse.checkInit;
                     Log.d(LOG_TAG, "Sending over websocket: " + jsonString);
                 }
                 webSocketClient.send(jsonString);
-                return null;
-            }
-        }, taskExecutor);
-    }
-
-    private Task<Void> disconnectAsync() {
-        return Task.call(new Callable<Void>() {
-            @Override
-            public Void call() throws Exception {
-                if (webSocketClient != null) {
-                    webSocketClient.close();
-                    webSocketClient = null;
-                }
-
                 return null;
             }
         }, taskExecutor);
