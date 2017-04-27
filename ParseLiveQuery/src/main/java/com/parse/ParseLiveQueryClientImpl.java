@@ -88,6 +88,7 @@ import static com.parse.Parse.checkInit;
         Subscription<T> subscription = new Subscription<>(requestId, query);
         subscriptions.append(requestId, subscription);
 
+        // TODO: differentiate between state=CONNECTED, vs received op=connected response
         if (inAnyState(WebSocketClient.State.CONNECTED)) {
             sendSubscription(subscription);
         } else if (userInitiatedDisconnect) {
