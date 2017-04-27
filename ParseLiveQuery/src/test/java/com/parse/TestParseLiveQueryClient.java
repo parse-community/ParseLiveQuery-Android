@@ -84,7 +84,8 @@ public class TestParseLiveQueryClient {
     }
 
     @Test
-    public void testSubscribeBetweenSocketConnectAndConnectResponse() throws Exception {
+    public void testSubscribeAfterSocketConnectBeforeConnectedOp() throws Exception {
+        // Bug: https://github.com/parse-community/ParseLiveQuery-Android/issues/46
         ParseQuery<ParseObject> queryA = ParseQuery.getQuery("objA");
         ParseQuery<ParseObject> queryB = ParseQuery.getQuery("objB");
         clearConnection();
@@ -102,21 +103,12 @@ public class TestParseLiveQueryClient {
         verify(webSocketClient, times(1)).send(contains("\"op\":\"connect\""));
 
         // Now if we subscribe to queryB, we SHOULD NOT send the subscribe yet, until we get op=connected
-        SubscriptionHandling<ParseObject> subB = parseLiveQueryClient.subscribe(queryB); // TODO: fix this state
+        SubscriptionHandling<ParseObject> subB = parseLiveQueryClient.subscribe(queryB);
         verify(webSocketClient, never()).send(contains("\"op\":\"subscribe\""));
 
         // on op=connected, _then_ we should send both subscriptions
         webSocketClientCallback.onMessage(createConnectedMessage().toString());
         verify(webSocketClient, times(2)).send(contains("\"op\":\"subscribe\""));
-
-        // 1. Subscribe to queryA
-        //    - it is not connected yet, so it will trigger reconnect.
-        // 2. Socket opens & connects;  initiate op=connect
-        // 3. subscribe to queryB
-        //    - SOCKET is connected, but we haven't received op=connected yet.
-        //    - BUG: it will call sendSubscription now
-        // 4. Server responds to #2 with op=connected
-        // 5. On op=connected, we replay pending subscriptions, including the one that was already sent in #3
     }
 
     @Test
