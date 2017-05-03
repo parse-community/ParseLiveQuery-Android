@@ -1,5 +1,6 @@
 package com.parse;
 
+import org.assertj.core.api.Assertions;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.After;
@@ -80,6 +81,34 @@ public class TestParseLiveQueryClient {
     public void tearDown() throws Exception {
         ParseCorePlugins.getInstance().reset();
         ParsePlugins.reset();
+    }
+
+    @Test
+    public void testSubscribeAfterSocketConnectBeforeConnectedOp() throws Exception {
+        // Bug: https://github.com/parse-community/ParseLiveQuery-Android/issues/46
+        ParseQuery<ParseObject> queryA = ParseQuery.getQuery("objA");
+        ParseQuery<ParseObject> queryB = ParseQuery.getQuery("objB");
+        clearConnection();
+
+        // This will trigger connectIfNeeded(), which calls reconnect()
+        SubscriptionHandling<ParseObject> subA = parseLiveQueryClient.subscribe(queryA);
+
+        verify(webSocketClient, times(1)).open();
+        verify(webSocketClient, never()).send(anyString());
+
+        // Now the socket is open
+        webSocketClientCallback.onOpen();
+        when(webSocketClient.getState()).thenReturn(WebSocketClient.State.CONNECTED);
+        // and we send op=connect
+        verify(webSocketClient, times(1)).send(contains("\"op\":\"connect\""));
+
+        // Now if we subscribe to queryB, we SHOULD NOT send the subscribe yet, until we get op=connected
+        SubscriptionHandling<ParseObject> subB = parseLiveQueryClient.subscribe(queryB);
+        verify(webSocketClient, never()).send(contains("\"op\":\"subscribe\""));
+
+        // on op=connected, _then_ we should send both subscriptions
+        webSocketClientCallback.onMessage(createConnectedMessage().toString());
+        verify(webSocketClient, times(2)).send(contains("\"op\":\"subscribe\""));
     }
 
     @Test
@@ -457,6 +486,11 @@ public class TestParseLiveQueryClient {
 
         assertEquals(originalParseObject.getClassName(), newParseObject.getClassName());
         assertEquals(originalParseObject.getObjectId(), newParseObject.getObjectId());
+    }
+
+    private void clearConnection() {
+        webSocketClient = null;
+        webSocketClientCallback = null;
     }
 
     private void reconnect() {

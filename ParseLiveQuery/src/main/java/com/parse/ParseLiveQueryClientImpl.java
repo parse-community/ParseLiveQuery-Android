@@ -38,6 +38,7 @@ import static com.parse.Parse.checkInit;
     private WebSocketClient webSocketClient;
     private int requestIdCount = 1;
     private boolean userInitiatedDisconnect = false;
+    private boolean hasReceivedConnected = false;
 
     /* package */ ParseLiveQueryClientImpl() {
         this(getDefaultUri());
@@ -88,7 +89,7 @@ import static com.parse.Parse.checkInit;
         Subscription<T> subscription = new Subscription<>(requestId, query);
         subscriptions.append(requestId, subscription);
 
-        if (inAnyState(WebSocketClient.State.CONNECTED)) {
+        if (isConnected()) {
             sendSubscription(subscription);
         } else if (userInitiatedDisconnect) {
             Log.w(LOG_TAG, "Warning: The client was explicitly disconnected! You must explicitly call .reconnect() in order to process your subscriptions.");
@@ -150,18 +151,21 @@ import static com.parse.Parse.checkInit;
             webSocketClient.close();
         }
 
+        userInitiatedDisconnect = false;
+        hasReceivedConnected = false;
         webSocketClient = webSocketClientFactory.createInstance(webSocketClientCallback, uri);
         webSocketClient.open();
-        userInitiatedDisconnect = false;
     }
 
     @Override
     public void disconnect() {
         if (webSocketClient != null) {
-            userInitiatedDisconnect = true;
             webSocketClient.close();
             webSocketClient = null;
         }
+
+        userInitiatedDisconnect = true;
+        hasReceivedConnected = false;
     }
 
     @Override
@@ -183,6 +187,10 @@ import static com.parse.Parse.checkInit;
     private WebSocketClient.State getWebSocketState() {
         WebSocketClient.State state = webSocketClient == null ? null : webSocketClient.getState();
         return state == null ? WebSocketClient.State.NONE : state;
+    }
+
+    private boolean isConnected() {
+        return hasReceivedConnected && inAnyState(WebSocketClient.State.CONNECTED);
     }
 
     private boolean inAnyState(WebSocketClient.State... states) {
@@ -219,6 +227,7 @@ import static com.parse.Parse.checkInit;
 
             switch (rawOperation) {
                 case "connected":
+                    hasReceivedConnected = true;
                     dispatchConnected();
                     Log.v(LOG_TAG, "Connected, sending pending subscription");
                     for (int i = 0; i < subscriptions.size(); i++) {
@@ -370,6 +379,7 @@ import static com.parse.Parse.checkInit;
         return new WebSocketClient.WebSocketClientCallback() {
             @Override
             public void onOpen() {
+                hasReceivedConnected = false;
                 Log.v(LOG_TAG, "Socket opened");
                 ParseUser.getCurrentSessionTokenAsync().onSuccessTask(new Continuation<String, Task<Void>>() {
                     @Override
@@ -405,12 +415,14 @@ import static com.parse.Parse.checkInit;
             @Override
             public void onClose() {
                 Log.v(LOG_TAG, "Socket onClose");
+                hasReceivedConnected = false;
                 dispatchDisconnected();
             }
 
             @Override
             public void onError(Throwable exception) {
                 Log.e(LOG_TAG, "Socket onError", exception);
+                hasReceivedConnected = false;
                 dispatchSocketError(exception);
             }
 
