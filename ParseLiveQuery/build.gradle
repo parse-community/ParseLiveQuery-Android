@@ -234,7 +234,7 @@ bintray {
         repo = 'maven'
         name = 'parse-livequery-android'
         userOrg = 'parse'
-        licenses = ['BSD License']
+        licenses = ['BSD']
         vcsUrl = gitLink
         version {
             name = project.version
