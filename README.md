@@ -14,14 +14,14 @@ To solve this problem, we introduce Parse LiveQuery. This tool allows you to sub
 
 Parse LiveQuery contains two parts, the LiveQuery server and the LiveQuery clients. In order to use live queries, you need to set up both of them.
 
-The easiest way to setup the LiveQuery server is to make it run with the [Open Source Parse Server](https://github.com/ParsePlatform/parse-server/wiki/Parse-LiveQuery#server-setup).
+The easiest way to setup the LiveQuery server is to make it run with the [Open Source Parse Server](https://github.com/parse-community/parse-server/wiki/Parse-LiveQuery#server-setup).
 
 ## Setup Client
 Download [the latest JAR][latest] or define in Gradle:
 
 ```groovy
 dependencies {
-  compile 'com.parse:parse-livequery-android:1.0.2'
+  compile 'com.parse:parse-livequery-android:1.0.3'
 }
 ```
 
@@ -111,7 +111,7 @@ We want to make contributing to this project as easy and transparent as possible
 
 -----
 
-As of April 5, 2017, Parse, LLC has transferred this code to the parse-community organization, and will no longer be contributing to or distributing this code. 
+As of April 5, 2017, Parse, LLC has transferred this code to the parse-community organization, and will no longer be contributing to or distributing this code.
 
  [parse.com]: https://www.parse.com/products/android
  [guide]: https://www.parse.com/docs/android/guide
@@ -120,12 +120,12 @@ As of April 5, 2017, Parse, LLC has transferred this code to the parse-community
  [latest]: https://search.maven.org/remote_content?g=com.parse&a=parse-livequery-android&v=LATEST
  [snap]: https://oss.sonatype.org/content/repositories/snapshots/
 
- [build-status-svg]: https://img.shields.io/travis/ParsePlatform/ParseLiveQuery-Android/master.svg
- [build-status-link]: https://travis-ci.org/ParsePlatform/ParseLiveQuery-Android/branches
- [coverage-status-svg]: https://img.shields.io/codecov/c/github/ParsePlatform/ParseLiveQuery-Android/master.svg
- [coverage-status-link]: https://codecov.io/github/ParsePlatform/ParseLiveQuery-Android?branch=master 
+ [build-status-svg]: https://img.shields.io/travis/parse-community/ParseLiveQuery-Android/master.svg
+ [build-status-link]: https://travis-ci.org/parse-community/ParseLiveQuery-Android/branches
+ [coverage-status-svg]: https://img.shields.io/codecov/c/github/parse-community/ParseLiveQuery-Android/master.svg
+ [coverage-status-link]: https://codecov.io/github/parse-community/ParseLiveQuery-Android?branch=master
  [maven-svg]: https://maven-badges.herokuapp.com/maven-central/com.parse/parse-livequery-android/badge.svg?style=flat
  [maven-link]: https://maven-badges.herokuapp.com/maven-central/com.parse/parse-livequery-android
 
  [license-svg]: https://img.shields.io/badge/license-BSD-lightgrey.svg
- [license-link]: https://github.com/ParsePlatform/ParseLiveQuery-Android/blob/master/LICENSE
+ [license-link]: https://github.com/parse-community/ParseLiveQuery-Android/blob/master/LICENSE
