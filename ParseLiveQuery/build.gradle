@@ -232,7 +232,7 @@ bintray {
     publish = true
     pkg {
         repo = 'maven'
-        name = 'parse-livequery-android'
+        name = 'com.parse:parse-livequery-android'
         userOrg = 'parse'
         licenses = ['BSD']
         vcsUrl = gitLink
