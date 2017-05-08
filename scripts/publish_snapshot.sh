@@ -1,7 +1,7 @@
 #!/bin/bash
 # Publishes SNAPSHOTs
 
-REPO_SLUG=ParsePlatform/ParseLiveQuery-Android
+REPO_SLUG=parse-community/ParseLiveQuery-Android
 BRANCH=master
 
 set -e
@@ -17,4 +17,3 @@ else
   ./gradlew uploadArchives
   echo "SNAPSHOT published!"
 fi
-
