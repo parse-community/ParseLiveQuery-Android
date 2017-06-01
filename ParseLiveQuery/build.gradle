@@ -4,7 +4,7 @@ apply plugin: 'com.android.library'
 apply plugin: 'com.github.kt3k.coveralls'
 
 group = 'com.parse'
-version = '1.0.4-SNAPSHOT'
+version = '1.0.4'
 
 ext {
     projDescription = 'A library that gives you access to the powerful Parse cloud platform from your Android app.'
@@ -50,7 +50,7 @@ dependencies {
     compile 'com.parse:parse-android:1.14.1'
     compile 'com.squareup.okhttp3:okhttp:3.6.0'
     compile 'com.parse.bolts:bolts-tasks:1.4.0'
-
+    compile 'com.github.rogerhu:Parse-SDK-Android:build_config-SNAPSHOT'
     testCompile 'org.robolectric:robolectric:3.3.1'
     testCompile 'org.skyscreamer:jsonassert:1.5.0'
     testCompile 'junit:junit:4.12'
