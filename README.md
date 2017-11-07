@@ -30,7 +30,7 @@ Snapshots of the development version are available in [Sonatype's `snapshots` re
 ## Use Client
 
 
-The LiveQuery client interface is based around the concept of `Subscriptions`. You can register any `ParseQuery` for live updates from the associated live query server, by simply calling `subscribe()` on a the client:
+The LiveQuery client interface is based around the concept of `Subscriptions`. You can register any `ParseQuery` for live updates from the associated live query server, by simply calling `subscribe()` on the client:
 ```java
 // Parse.initialize should be called first
 
