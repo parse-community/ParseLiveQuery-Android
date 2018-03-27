@@ -1,8 +1,9 @@
 package com.parse;
 
 import android.util.Log;
-import android.util.SparseArray;
-
+import bolts.Continuation;
+import bolts.Task;
+import okhttp3.OkHttpClient;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -13,11 +14,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
-
-import bolts.Continuation;
-import bolts.Task;
-import okhttp3.OkHttpClient;
 
 import static com.parse.Parse.checkInit;
 
@@ -28,7 +26,7 @@ import static com.parse.Parse.checkInit;
     private final Executor taskExecutor;
     private final String applicationId;
     private final String clientKey;
-    private final SparseArray<Subscription<? extends ParseObject>> subscriptions = new SparseArray<>();
+    private final ConcurrentHashMap<Integer, Subscription<? extends ParseObject>> subscriptions = new ConcurrentHashMap<>();
     private final URI uri;
     private final WebSocketClientFactory webSocketClientFactory;
     private final WebSocketClient.WebSocketClientCallback webSocketClientCallback;
@@ -87,7 +85,7 @@ import static com.parse.Parse.checkInit;
     public <T extends ParseObject> SubscriptionHandling<T> subscribe(ParseQuery<T> query) {
         int requestId = requestIdGenerator();
         Subscription<T> subscription = new Subscription<>(requestId, query);
-        subscriptions.append(requestId, subscription);
+        subscriptions.put(requestId, subscription);
 
         if (isConnected()) {
             sendSubscription(subscription);
@@ -124,8 +122,7 @@ import static com.parse.Parse.checkInit;
     @Override
     public <T extends ParseObject> void unsubscribe(final ParseQuery<T> query) {
         if (query != null) {
-            for (int i = 0; i < subscriptions.size(); i++) {
-                Subscription subscription = subscriptions.valueAt(i);
+            for (Subscription<? extends ParseObject> subscription : subscriptions.values()) {
                 if (query.equals(subscription.getQuery())) {
                     sendUnsubscription(subscription);
                 }
@@ -136,8 +133,7 @@ import static com.parse.Parse.checkInit;
     @Override
     public <T extends ParseObject> void unsubscribe(final ParseQuery<T> query, final SubscriptionHandling<T> subscriptionHandling) {
         if (query != null && subscriptionHandling != null) {
-            for (int i = 0; i < subscriptions.size(); i++) {
-                Subscription subscription = subscriptions.valueAt(i);
+            for (Subscription<? extends ParseObject> subscription : subscriptions.values()) {
                 if (query.equals(subscription.getQuery()) && subscriptionHandling.equals(subscription)) {
                     sendUnsubscription(subscription);
                 }
@@ -230,8 +226,8 @@ import static com.parse.Parse.checkInit;
                     hasReceivedConnected = true;
                     dispatchConnected();
                     Log.v(LOG_TAG, "Connected, sending pending subscription");
-                    for (int i = 0; i < subscriptions.size(); i++) {
-                        sendSubscription(subscriptions.valueAt(i));
+                    for (Subscription<? extends ParseObject> subscription : subscriptions.values()) {
+                        sendSubscription(subscription);
                     }
                     break;
                 case "redirect":
