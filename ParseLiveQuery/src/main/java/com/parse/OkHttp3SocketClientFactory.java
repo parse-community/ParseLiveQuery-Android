@@ -35,7 +35,7 @@ import okio.ByteString;
 
         private final WebSocketClientCallback webSocketClientCallback;
         private WebSocket webSocket;
-        private State state = State.NONE;
+        private volatile State state = State.NONE;
         private final OkHttpClient client;
         private final String url;
         private final int STATUS_CODE = 1000;
@@ -73,7 +73,7 @@ import okio.ByteString;
         };
 
         private OkHttp3WebSocketClient(OkHttpClient okHttpClient,
-                WebSocketClientCallback webSocketClientCallback, URI hostUrl) {
+                                       WebSocketClientCallback webSocketClientCallback, URI hostUrl) {
             client = okHttpClient;
             this.webSocketClientCallback = webSocketClientCallback;
             url = hostUrl.toString();
@@ -94,12 +94,14 @@ import okio.ByteString;
 
         @Override
         public synchronized void close() {
-            setState(State.DISCONNECTING);
-            webSocket.close(STATUS_CODE, CLOSING_MSG);
+            if (State.NONE != state) {
+                setState(State.DISCONNECTING);
+                webSocket.close(STATUS_CODE, CLOSING_MSG);
+            }
         }
 
         @Override
-        public void send(String message) {
+        public synchronized void send(String message) {
             if (state == State.CONNECTED) {
                 webSocket.send(message);
             }
@@ -110,8 +112,10 @@ import okio.ByteString;
             return state;
         }
 
-        private synchronized void setState(State newState) {
-            this.state = newState;
+        private void setState(State newState) {
+            synchronized (this) {
+                this.state = newState;
+            }
             this.webSocketClientCallback.stateChanged();
         }
     }

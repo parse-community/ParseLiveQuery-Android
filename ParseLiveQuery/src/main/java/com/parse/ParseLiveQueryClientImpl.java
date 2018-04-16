@@ -1,9 +1,7 @@
 package com.parse;
 
 import android.util.Log;
-import bolts.Continuation;
-import bolts.Task;
-import okhttp3.OkHttpClient;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -16,6 +14,10 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
+
+import bolts.Continuation;
+import bolts.Task;
+import okhttp3.OkHttpClient;
 
 import static com.parse.Parse.checkInit;
 
@@ -142,7 +144,7 @@ import static com.parse.Parse.checkInit;
     }
 
     @Override
-    public void reconnect() {
+    public synchronized void reconnect() {
         if (webSocketClient != null) {
             webSocketClient.close();
         }
@@ -154,7 +156,7 @@ import static com.parse.Parse.checkInit;
     }
 
     @Override
-    public void disconnect() {
+    public synchronized void disconnect() {
         if (webSocketClient != null) {
             webSocketClient.close();
             webSocketClient = null;
