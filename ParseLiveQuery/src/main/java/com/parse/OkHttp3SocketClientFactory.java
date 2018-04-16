@@ -94,14 +94,14 @@ import okio.ByteString;
 
         @Override
         public synchronized void close() {
-            setState(State.DISCONNECTING);
-            if (webSocket != null) {
+            if (State.NONE != state) {
+                setState(State.DISCONNECTING);
                 webSocket.close(STATUS_CODE, CLOSING_MSG);
             }
         }
 
         @Override
-        public void send(String message) {
+        public synchronized void send(String message) {
             if (state == State.CONNECTED) {
                 webSocket.send(message);
             }
@@ -113,7 +113,9 @@ import okio.ByteString;
         }
 
         private void setState(State newState) {
-            this.state = newState;
+            synchronized (this) {
+                this.state = newState;
+            }
             this.webSocketClientCallback.stateChanged();
         }
     }
