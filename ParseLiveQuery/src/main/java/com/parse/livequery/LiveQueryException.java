@@ -1,4 +1,4 @@
-package com.parse;
+package com.parse.livequery;
 
 import java.util.Locale;
 

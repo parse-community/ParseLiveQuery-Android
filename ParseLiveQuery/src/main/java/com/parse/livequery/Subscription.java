@@ -1,9 +1,12 @@
-package com.parse;
+package com.parse.livequery;
+
+import com.parse.ParseObject;
+import com.parse.ParseQuery;
 
 import java.util.ArrayList;
 import java.util.List;
 
-/* package */ class Subscription<T extends ParseObject> implements SubscriptionHandling<T> {
+class Subscription<T extends ParseObject> implements SubscriptionHandling<T> {
 
     private final List<HandleEventsCallback<T>> handleEventsCallbacks = new ArrayList<>();
     private final List<HandleErrorCallback<T>> handleErrorCallbacks = new ArrayList<>();

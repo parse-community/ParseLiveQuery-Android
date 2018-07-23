@@ -1,8 +1,8 @@
-package com.parse;
+package com.parse.livequery;
 
 import java.net.URI;
 
-/* package */ interface WebSocketClientFactory {
+public interface WebSocketClientFactory {
 
     WebSocketClient createInstance(WebSocketClient.WebSocketClientCallback webSocketClientCallback, URI hostUrl);
 

@@ -1,4 +1,7 @@
-package com.parse;
+package com.parse.livequery;
+
+import com.parse.ParseObject;
+import com.parse.ParseQuery;
 
 import java.net.URI;
 import java.util.concurrent.Executor;
@@ -38,8 +41,7 @@ public interface ParseLiveQueryClient {
             return new ParseLiveQueryClientImpl(uri, webSocketClientFactory);
         }
 
-        /* package */
-        static ParseLiveQueryClient getClient(URI uri, WebSocketClientFactory webSocketClientFactory, Executor taskExecutor) {
+        public static ParseLiveQueryClient getClient(URI uri, WebSocketClientFactory webSocketClientFactory, Executor taskExecutor) {
             return new ParseLiveQueryClientImpl(uri, webSocketClientFactory, taskExecutor);
         }
 

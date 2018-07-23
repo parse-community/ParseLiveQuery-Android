@@ -1,6 +1,6 @@
-package com.parse;
+package com.parse.livequery;
 
-/* package */ interface WebSocketClient {
+public interface WebSocketClient {
 
     void open();
 

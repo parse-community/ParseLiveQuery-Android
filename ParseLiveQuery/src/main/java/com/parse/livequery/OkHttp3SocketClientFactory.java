@@ -1,4 +1,4 @@
-package com.parse;
+package com.parse.livequery;
 
 import android.util.Log;
 
@@ -12,7 +12,7 @@ import okhttp3.WebSocket;
 import okhttp3.WebSocketListener;
 import okio.ByteString;
 
-/* package */ public class OkHttp3SocketClientFactory implements WebSocketClientFactory {
+public class OkHttp3SocketClientFactory implements WebSocketClientFactory {
 
     OkHttpClient mClient;
 
