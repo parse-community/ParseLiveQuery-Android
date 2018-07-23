@@ -1,9 +1,14 @@
-package com.parse;
+package com.parse.livequery;
+
+import com.parse.ParseObject;
+import com.parse.ParseQuery;
+import com.parse.PointerEncoder;
+import com.parse.livequery.ClientOperation;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
-/* package */ class SubscribeClientOperation<T extends ParseObject> extends ClientOperation {
+class SubscribeClientOperation<T extends ParseObject> extends ClientOperation {
 
     private final int requestId;
     private final ParseQuery.State<T> state;

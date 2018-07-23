@@ -1,4 +1,7 @@
-package com.parse;
+package com.parse.livequery;
+
+import com.parse.ParseObject;
+import com.parse.ParseQuery;
 
 public interface SubscriptionHandling<T extends ParseObject> {
 

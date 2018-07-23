@@ -1,4 +1,4 @@
-package com.parse;
+package com.parse.livequery;
 
 public interface ParseLiveQueryClientCallbacks {
     void onLiveQueryClientConnected(ParseLiveQueryClient client);

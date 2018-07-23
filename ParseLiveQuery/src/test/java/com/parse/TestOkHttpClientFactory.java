@@ -1,5 +1,8 @@
 package com.parse;
 
+import com.parse.livequery.OkHttp3SocketClientFactory;
+import com.parse.livequery.WebSocketClient;
+
 import junit.framework.Assert;
 
 import org.junit.After;
@@ -13,7 +16,7 @@ import java.net.URI;
 
 import okhttp3.OkHttpClient;
 
-import static com.parse.WebSocketClient.State.NONE;
+import static com.parse.livequery.WebSocketClient.State.NONE;
 
 @RunWith(MockitoJUnitRunner.class)
 public class TestOkHttpClientFactory {

@@ -1,13 +1,20 @@
-package com.parse;
+package com.parse.livequery;
 
 import android.util.Log;
+
+import com.parse.PLog;
+import com.parse.Parse;
+import com.parse.ParseDecoder;
+import com.parse.ParseObject;
+import com.parse.ParsePlugins;
+import com.parse.ParseQuery;
+import com.parse.ParseUser;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -19,9 +26,7 @@ import bolts.Continuation;
 import bolts.Task;
 import okhttp3.OkHttpClient;
 
-import static com.parse.Parse.checkInit;
-
-/* package */ class ParseLiveQueryClientImpl implements ParseLiveQueryClient {
+class ParseLiveQueryClientImpl implements ParseLiveQueryClient {
 
     private static final String LOG_TAG = "ParseLiveQueryClient";
 
@@ -57,7 +62,7 @@ import static com.parse.Parse.checkInit;
     }
 
     /* package */ ParseLiveQueryClientImpl(URI uri, WebSocketClientFactory webSocketClientFactory, Executor taskExecutor) {
-        checkInit();
+        Parse.checkInit();
         this.uri = uri;
         this.applicationId = ParsePlugins.get().applicationId();
         this.clientKey = ParsePlugins.get().clientKey();
@@ -67,10 +72,8 @@ import static com.parse.Parse.checkInit;
     }
 
     private static URI getDefaultUri() {
-        URL serverUrl = ParseRESTCommand.server;
-        if (serverUrl == null) return null;
-        String url = serverUrl.toString();
-        if (serverUrl.getProtocol().equals("https")) {
+        String url = ParsePlugins.get().server();
+        if (url.contains("https")) {
             url = url.replaceFirst("https", "wss");
         } else {
             url = url.replaceFirst("http", "ws");
@@ -419,14 +422,14 @@ import static com.parse.Parse.checkInit;
 
             @Override
             public void onError(Throwable exception) {
-                Log.e(LOG_TAG, "Socket onError", exception);
+                PLog.e(LOG_TAG, "Socket onError", exception);
                 hasReceivedConnected = false;
                 dispatchSocketError(exception);
             }
 
             @Override
             public void stateChanged() {
-                Log.v(LOG_TAG, "Socket stateChanged");
+                PLog.v(LOG_TAG, "Socket stateChanged");
             }
         };
     }

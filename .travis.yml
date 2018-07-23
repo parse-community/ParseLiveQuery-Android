@@ -1,42 +1,26 @@
 branches:
   only:
     - master
-    - /^\d+\.\d+\.\d+$/ # regex
-language: android
-sudo: false
-jdk:
-  - oraclejdk8
+    - /^v4-\d+\.\d+\.\d+$/ # regex
 
-android:
-  components:
-    - tools # to get the new `repository-11.xml`
-    - platform-tools
-    - build-tools-25.0.2
-    - android-25
-    - doc-25
-    - extra-google-m2repository
-    - extra-android-m2repository
-  licenses:
-    - 'android-sdk-license-.+'
+language: android
+
+jdk:
+    - oraclejdk8
 
 before_install:
     - pip install --user codecov
+    - mkdir "$ANDROID_HOME/licenses" || true
+    - echo "d56f5187479451eabf01fb78af6dfcb131a6481e" > "$ANDROID_HOME/licenses/android-sdk-license"
 
 script:
   - ./gradlew clean testDebugUnitTest jacocoTestReport --info
 
 after_success:
+  - ./gradlew coveralls
   - codecov
-  - ./scripts/publish_snapshot.sh
 
 cache:
   directories:
     - $HOME/.gradle
     - $HOME/.m2/repository
-deploy:
-  provider: script
-  script: ./gradlew bintrayUpload
-  skip_cleanup: true
-  on:
-    branch: master
-    tags: true
