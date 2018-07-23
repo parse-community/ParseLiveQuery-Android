@@ -97,8 +97,8 @@ We want to make contributing to this project as easy and transparent as possible
 
 As of April 5, 2017, Parse, LLC has transferred this code to the parse-community organization, and will no longer be contributing to or distributing this code.
 
- [build-status-svg]: https://img.shields.io/travis/parse-community/ParseLiveQuery-Android/master.svg
- [build-status-link]: https://travis-ci.org/parse-community/ParseLiveQuery-Android/branches
+ [build-status-svg]: https://travis-ci.org/parse-community/ParseLiveQuery-Android.svg?branch=master
+ [build-status-link]: https://travis-ci.org/parse-community/ParseLiveQuery-Android
 
  [license-svg]: https://img.shields.io/badge/license-BSD-lightgrey.svg
  [license-link]: https://github.com/parse-community/ParseLiveQuery-Android/blob/master/LICENSE
