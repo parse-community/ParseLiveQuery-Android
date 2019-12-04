@@ -1,15 +1,15 @@
-apply plugin: 'com.android.library'
-apply plugin: 'com.github.kt3k.coveralls'
+apply plugin: "com.android.library"
+apply plugin: "com.github.kt3k.coveralls"
 
 android {
-    compileSdkVersion 28
+    compileSdkVersion 29
 
     defaultConfig {
         minSdkVersion 15
-        targetSdkVersion 28
+        targetSdkVersion 29
         versionCode 1
         versionName "1.0"
-        consumerProguardFiles 'release-proguard.pro'
+        consumerProguardFiles "release-proguard.pro"
     }
 
     lintOptions {
@@ -24,18 +24,18 @@ android {
 }
 
 dependencies {
-    api "com.github.parse-community.Parse-SDK-Android:parse:1.19.0"
-    api 'com.squareup.okhttp3:okhttp:3.12.1'
+    api "com.github.parse-community.Parse-SDK-Android:parse:1.22.1"
+    api "com.squareup.okhttp3:okhttp:3.14.4"
 
-    testImplementation 'org.robolectric:robolectric:3.3.1'
-    testImplementation 'org.skyscreamer:jsonassert:1.5.0'
-    testImplementation 'junit:junit:4.12'
-    testImplementation 'org.mockito:mockito-core:1.10.19'
+    testImplementation "org.robolectric:robolectric:3.3.1"
+    testImplementation "org.skyscreamer:jsonassert:1.5.0"
+    testImplementation "junit:junit:4.12"
+    testImplementation "org.mockito:mockito-core:1.10.19"
 }
 
 //region Code Coverage
 
-apply plugin: 'jacoco'
+apply plugin: "jacoco"
 
 jacoco {
     toolVersion "0.7.1.201405082137"
@@ -75,4 +75,4 @@ coveralls.jacocoReportPath = "${buildDir}/reports/jacoco/jacocoTestReport/jacoco
 
 //endregion
 
-apply from: 'https://raw.githubusercontent.com/Commit451/gradle-android-javadocs/1.0.0/gradle-android-javadocs.gradle'
+apply from: "https://raw.githubusercontent.com/Commit451/gradle-android-javadocs/1.1.0/gradle-android-javadocs.gradle"
