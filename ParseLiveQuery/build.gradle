@@ -24,7 +24,7 @@ android {
 }
 
 dependencies {
-    api "com.github.parse-community.Parse-SDK-Android:parse:1.22.1"
+    api "com.github.parse-community.Parse-SDK-Android:parse:1.24.1"
     api "com.squareup.okhttp3:okhttp:3.14.4"
 
     testImplementation "org.robolectric:robolectric:3.3.1"
