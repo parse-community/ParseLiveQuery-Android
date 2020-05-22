@@ -30,11 +30,13 @@ class SubscribeClientOperation<T extends ParseObject> extends ClientOperation {
         JSONObject queryJsonObject = new JSONObject();
         queryJsonObject.put("className", state.className());
 
-        // TODO: add support for fields
-        // https://github.com/ParsePlatform/parse-server/issues/3671
-        
+
         PointerEncoder pointerEncoder = PointerEncoder.get();
         queryJsonObject.put("where", pointerEncoder.encode(state.constraints()));
+
+        if(state.selectedKeys() != null)
+            queryJsonObject.put("fields", pointerEncoder.encode(state.selectedKeys()));
+
 
         jsonObject.put("query", queryJsonObject);
 
