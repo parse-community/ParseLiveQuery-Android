@@ -24,7 +24,7 @@ import org.robolectric.util.Transcript;
 import java.io.IOException;
 import java.net.URI;
 
-import bolts.Task;
+import com.parse.boltsinternal.Task;
 
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertNotNull;

@@ -22,8 +22,8 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 
-import bolts.Continuation;
-import bolts.Task;
+import com.parse.boltsinternal.Continuation;
+import com.parse.boltsinternal.Task;
 import okhttp3.OkHttpClient;
 
 class ParseLiveQueryClientImpl implements ParseLiveQueryClient {
