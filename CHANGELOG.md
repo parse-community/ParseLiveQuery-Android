@@ -2,6 +2,9 @@
 
 ### master
 
+### 1.2.2
+- CHANGE: Change OkHttp dependency to allow for Android versions < 5.0
+
 ### 1.2.1
 > NOTE:
 >
