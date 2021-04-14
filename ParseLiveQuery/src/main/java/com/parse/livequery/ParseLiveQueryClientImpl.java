@@ -386,7 +386,7 @@ class ParseLiveQueryClientImpl implements ParseLiveQueryClient {
                     @Override
                     public Task<Void> then(Task<String> task) throws Exception {
                         String sessionToken = task.getResult();
-                        return sendOperationAsync(new ConnectClientOperation(applicationId, sessionToken));
+                        return sendOperationAsync(new ConnectClientOperation(applicationId, sessionToken, clientKey));
                     }
                 }).continueWith(new Continuation<Void, Void>() {
                     public Void then(Task<Void> task) {
