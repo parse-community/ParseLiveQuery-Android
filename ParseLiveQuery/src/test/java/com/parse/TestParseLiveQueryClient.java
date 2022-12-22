@@ -413,13 +413,42 @@ public class TestParseLiveQueryClient {
 
     @Test
     public void testEmptySessionTokenOnSubscribe() {
-        when(mockUser.getSessionToken()).thenReturn("the token");
         when(webSocketClient.getState()).thenReturn(WebSocketClient.State.CONNECTED);
         parseLiveQueryClient.subscribe(ParseQuery.getQuery("Test"));
         verify(webSocketClient, times(1)).send(contains("\"op\":\"connect\""));
         verify(webSocketClient, times(1)).send(and(
                 contains("\"op\":\"subscribe\""),
-                contains("\"sessionToken\":\"the token\"")));
+                not(contains("\"sessionToken\":"))));
+    }
+
+    @Test
+    public void testClientKeySentOnConnect() throws Exception {
+        Parse.Configuration configuration = new Parse.Configuration.Builder(null)
+                .applicationId("1234")
+                .clientKey("1234")
+                .build();
+        ParsePlugins.reset();
+        ParsePlugins.initialize(null, configuration);
+
+        parseLiveQueryClient = ParseLiveQueryClient.Factory.getClient(new URI(""), new WebSocketClientFactory() {
+            @Override
+            public WebSocketClient createInstance(WebSocketClient.WebSocketClientCallback webSocketClientCallback, URI hostUrl) {
+                TestParseLiveQueryClient.this.webSocketClientCallback = webSocketClientCallback;
+                webSocketClient = mock(WebSocketClient.class);
+                return webSocketClient;
+            }
+        }, new ImmediateExecutor());
+
+        parseLiveQueryClient.reconnect();
+        webSocketClientCallback.onOpen();
+        verify(webSocketClient, times(1)).send(contains("\"clientKey\":\"1234\""));
+    }
+
+    @Test
+    public void testEmptyClientKeyOnConnect() {
+        parseLiveQueryClient.reconnect();
+        webSocketClientCallback.onOpen();
+        verify(webSocketClient, times(1)).send(not(contains("\"clientKey\":")));
     }
 
     @Test

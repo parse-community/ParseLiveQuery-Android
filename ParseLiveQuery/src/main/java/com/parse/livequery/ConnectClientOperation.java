@@ -7,10 +7,12 @@ class ConnectClientOperation extends ClientOperation {
 
     private final String applicationId;
     private final String sessionToken;
+    private final String clientKey;
 
-    ConnectClientOperation(String applicationId, String sessionToken) {
+    ConnectClientOperation(String applicationId, String sessionToken, String clientKey) {
         this.applicationId = applicationId;
         this.sessionToken = sessionToken;
+        this.clientKey = clientKey;
     }
 
     @Override
@@ -19,6 +21,7 @@ class ConnectClientOperation extends ClientOperation {
         jsonObject.put("op", "connect");
         jsonObject.put("applicationId", applicationId);
         jsonObject.put("sessionToken", sessionToken);
+        jsonObject.put("clientKey", clientKey);
         return jsonObject;
     }
 }
